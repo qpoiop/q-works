@@ -118,7 +118,7 @@ export default function AuthPage() {
         </div>
 
         <div style={{ marginTop: 18, padding: '12px 14px', background: '#f8f9fb', borderRadius: 11, fontSize: 11.5, color: '#8a94a6', lineHeight: 1.6 }}>
-          체험 계정 — 닉네임 <b style={{ color: '#4b5563' }}>김하늘</b> · 비밀번호 <b style={{ color: '#4b5563' }}>1234</b> (팀 PROD2026)
+          체험 계정 — 닉네임 <b style={{ color: '#4b5563' }}>테스터</b> · 비밀번호 <b style={{ color: '#4b5563' }}>1234</b> (팀 PROD2026)
           <br />팀 코드: {DEMO_TEAM_CODES}
         </div>
       </div>

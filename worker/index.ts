@@ -34,8 +34,8 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   { name: '0002_auth_teams', sql: schema2 }
 ]
 
-/** 시안 시드 멤버 — users 시드용 (비밀번호 '1234') */
-const SEED_MEMBERS = ['김하늘', '김서연', '박준호', '이지훈', '최유나', '정민석', '한소희', '강태오']
+/** 시안 시드 멤버 + 체험 계정 — users 시드용 (비밀번호 '1234') */
+const SEED_MEMBERS = ['테스터', '김하늘', '김서연', '박준호', '이지훈', '최유나', '정민석', '한소희', '강태오']
 
 let migrated: Promise<void> | null = null
 
@@ -61,17 +61,20 @@ function ensureMigrated(db: D1Database): Promise<void> {
       }
       await db.prepare("INSERT INTO _migrations (name, applied_at) VALUES (?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(m.name).run()
     }
-    // 시드 유저 (시안 체험 계정: 비밀번호 1234, 팀 PROD2026)
-    const userCount = await db.prepare('SELECT COUNT(*) AS c FROM users').first<{ c: number }>()
-    if ((userCount?.c ?? 0) === 0) {
-      for (const name of SEED_MEMBERS) {
-        const salt = crypto.randomUUID()
-        const hash = await hashPassword('1234', salt)
-        await db
-          .prepare('INSERT OR IGNORE INTO users (nickname, password_hash, salt, team_code, avatar) VALUES (?, ?, ?, ?, NULL)')
-          .bind(name, hash, salt, 'PROD2026')
-          .run()
-      }
+    // 시드 유저 (체험 계정 포함: 비밀번호 1234, 팀 PROD2026) — 빠진 멤버만 추가 (기존 DB에도 적용)
+    const placeholders = SEED_MEMBERS.map(() => '?').join(',')
+    const existing = new Set(
+      (await db.prepare(`SELECT nickname FROM users WHERE nickname IN (${placeholders})`).bind(...SEED_MEMBERS).all<{ nickname: string }>())
+        .results.map((r) => r.nickname)
+    )
+    for (const name of SEED_MEMBERS) {
+      if (existing.has(name)) continue
+      const salt = crypto.randomUUID()
+      const hash = await hashPassword('1234', salt)
+      await db
+        .prepare('INSERT OR IGNORE INTO users (nickname, password_hash, salt, team_code, avatar) VALUES (?, ?, ?, ?, NULL)')
+        .bind(name, hash, salt, 'PROD2026')
+        .run()
     }
   })().catch((e) => {
     migrated = null

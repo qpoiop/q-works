@@ -4,7 +4,7 @@ Claude Design 시안(`팀 작업 관리.dc.html` v2)을 1:1로 구현한 팀 업
 
 - **프런트엔드**: React 18 + Vite + TypeScript, PWA(vite-plugin-pwa, 오프라인 셸 캐시·홈 화면 설치)
 - **백엔드**: Cloudflare Worker (정적 자산 + `/api/*` JSON API) + D1
-- **배포 URL**: https://team-task-app.qpoiop3.workers.dev (체험 계정: `김하늘` / `1234`)
+- **배포 URL**: https://team-task-app.qpoiop3.workers.dev (체험 계정: `테스터` / `1234`)
 
 ## 기능
 
