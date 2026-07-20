@@ -216,6 +216,8 @@ export default function App() {
             })}
             onToday={() => setCal({ y: now.getFullYear(), m: now.getMonth() })}
             onOpen={openEdit}
+            canEdit={store.canEdit}
+            onToggle={handleToggle}
           />
         )
       case 'team':
@@ -224,7 +226,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#eef0f3', overflow: 'hidden' }}>
+    <div className="app-root">
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {!isMobile && (
           <Sidebar view={view} onNavigate={navigate} badgeCount={badgeCount} me={me} onProfile={() => setProfileOpen((v) => !v)} />
@@ -235,7 +237,7 @@ export default function App() {
             onBell={toggleNotifPanel} onNew={openCreate}
             isMobile={isMobile} me={me} onProfile={() => setProfileOpen((v) => !v)}
           />
-          <div style={{ flex: 1, overflowY: 'auto', padding: 22 }} key={view}>
+          <div className="view-scroll" key={view}>
             <div className="anim-fade" style={{ maxWidth: 940, margin: '0 auto' }}>{viewBody()}</div>
           </div>
         </main>

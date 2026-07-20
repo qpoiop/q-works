@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { CSSProperties, ChangeEvent } from 'react'
 import type { NotifySettings, Priority, Status, TaskForm } from '../types'
-import { COLOR, PRIORITY_META, STATUS_META } from '../config/meta'
+import { COLOR, PRIORITY_META, STATUS_META, memberMeta } from '../config/meta'
+import { dueMeta, fmtDate } from '../lib/date'
 
 interface Props {
   form: TaskForm
@@ -35,6 +36,87 @@ const NOTIFY_OPTIONS: { key: keyof NotifySettings; label: string }[] = [
   { key: 'update', label: '작업 업데이트 (상태 변경 시)' }
 ]
 
+const roLabel: CSSProperties = { fontSize: 12.5, fontWeight: 600, color: '#8a94a6', width: 72, flex: 'none' }
+const roRow: CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, minHeight: 30 }
+
+/** 읽기전용: 편집 컨트롤 대신 요약 정보만 표시 */
+function ReadOnlyDetail({ form }: { form: TaskForm }) {
+  const done = form.status === '완료'
+  const due = dueMeta(form.due, done)
+  const st = STATUS_META[form.status]
+  const pri = PRIORITY_META[form.priority]
+  const member = memberMeta(form.assignee)
+  const tags = form.tags.split(',').map((t) => t.trim()).filter(Boolean)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 11,
+        background: '#f2f3f5', color: '#6b7280', fontSize: 12.5, fontWeight: 500
+      }}>
+        <span style={{ flex: 'none', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 6, background: '#e4e7ec', color: '#8a94a6' }}>
+          읽기 전용
+        </span>
+        {form.assignee}님이 편집을 제한한 업무예요. 내용만 확인할 수 있어요.
+      </div>
+      <div>
+        <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px', lineHeight: 1.4 }}>{form.title}</div>
+        {form.content && (
+          <div style={{ marginTop: 8, fontSize: 13.5, color: '#4b5563', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{form.content}</div>
+        )}
+      </div>
+      <div style={{ borderTop: '1px solid #eef0f3', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={roRow}>
+          <span style={roLabel}>담당자</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <span style={{
+              width: 22, height: 22, borderRadius: '50%', background: member.color, color: '#fff',
+              fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}>
+              {member.short}
+            </span>
+            <span style={{ fontSize: 13.5, fontWeight: 600 }}>{form.assignee}</span>
+          </span>
+        </div>
+        <div style={roRow}>
+          <span style={roLabel}>마감일</span>
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 7, background: due.bg, color: due.color }}>{due.label}</span>
+          <span style={{ fontSize: 12.5, color: '#8a94a6' }}>{fmtDate(form.due)}</span>
+        </div>
+        <div style={roRow}>
+          <span style={roLabel}>우선순위</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: pri.dot }} />{form.priority}
+          </span>
+        </div>
+        <div style={roRow}>
+          <span style={roLabel}>상태</span>
+          <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 7, background: st.bg, color: st.color }}>{form.status}</span>
+        </div>
+        {tags.length > 0 && (
+          <div style={roRow}>
+            <span style={roLabel}>태그</span>
+            <span style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {tags.map((tag) => (
+                <span key={tag} style={{ fontSize: 11.5, color: '#6b7280', background: '#f2f3f5', padding: '3px 8px', borderRadius: 6 }}>#{tag}</span>
+              ))}
+            </span>
+          </div>
+        )}
+        <div style={roRow}>
+          <span style={roLabel}>공개 범위</span>
+          <span style={{
+            fontSize: 11.5, fontWeight: 600, padding: '3px 8px', borderRadius: 6,
+            background: form.isPublic ? 'oklch(0.96 0.03 264)' : '#f2f3f5',
+            color: form.isPublic ? 'oklch(0.5 0.14 264)' : '#9aa0aa'
+          }}>
+            {form.isPublic ? '공개 (팀 공유)' : '비공개 (나만)'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function TaskModal({ form: initial, isEdit, readOnly, memberNames, onSave, onDelete, onClose }: Props) {
   const [form, setForm] = useState<TaskForm>(initial)
   const set = <K extends keyof TaskForm>(k: K, v: TaskForm[K]) => setForm((f) => ({ ...f, [k]: v }))
@@ -63,18 +145,10 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
         </div>
 
         <div style={{ padding: '20px 22px', maxHeight: '66vh', overflowY: 'auto' }}>
-          {readOnly && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 11,
-              background: '#f2f3f5', color: '#6b7280', fontSize: 12.5, fontWeight: 500, marginBottom: 16
-            }}>
-              <span style={{ flex: 'none', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 6, background: '#e4e7ec', color: '#8a94a6' }}>
-                읽기 전용
-              </span>
-              {form.assignee}님이 편집을 제한한 업무예요. 내용만 확인할 수 있어요.
-            </div>
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, pointerEvents: readOnly ? 'none' : 'auto' }}>
+          {readOnly ? (
+            <ReadOnlyDetail form={form} />
+          ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={labelStyle}>제목</label>
             <input value={form.title} onChange={setText('title')} placeholder="업무 제목을 입력하세요" style={inputStyle} />
@@ -162,6 +236,7 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
             </div>
           </div>
           </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
