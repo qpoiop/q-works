@@ -145,22 +145,16 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
   }
 
   return (
-    <div className="overlay-fade" onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(16,24,40,.32)', zIndex: 50,
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 24, overflowY: 'auto'
-    }}>
-      <div className="anim-pop" onClick={(e) => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 560, margin: 'auto', background: '#fff', borderRadius: 18,
-        boxShadow: '0 24px 60px rgba(16,24,40,.28)', overflow: 'hidden'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #eef0f3' }}>
+    <div className="overlay-fade modal-overlay" onClick={onClose} style={{ zIndex: 50 }}>
+      <div className="anim-pop modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #eef0f3' }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>{modalTitle}</div>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 9, border: 'none', background: '#f2f3f5', fontSize: 16, color: '#6b7280', cursor: 'pointer' }}>
             ×
           </button>
         </div>
 
-        <div style={{ padding: '20px 22px', maxHeight: '66vh', overflowY: 'auto' }}>
+        <div className="modal-scroll" style={{ padding: '20px 22px' }}>
           {readOnly ? (
             <ReadOnlyDetail form={form} />
           ) : (
@@ -255,7 +249,7 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
           {readOnly ? (
             <button
               className="btn-ghost"
