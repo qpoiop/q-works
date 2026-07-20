@@ -3,8 +3,8 @@ import schema1 from '../migrations/0001_init.sql'
 import schema2 from '../migrations/0002_auth_teams.sql'
 import schema3 from '../migrations/0003_push_subscriptions.sql'
 import {
-  FIELD_LIMITS, MAX_NOTIFICATIONS, MAX_TASKS,
-  bodyTooLarge, checkRateLimit, isCrossSiteMutation, withSecurityHeaders
+  FIELD_LIMITS, MAX_NOTIFICATIONS, MAX_TASKS, MAX_USERS,
+  bodyTooLarge, checkAuthRateLimit, checkRateLimit, isCrossSiteMutation, withSecurityHeaders
 } from './security'
 import type { RateLimiterBinding } from './security'
 import {
@@ -20,6 +20,7 @@ export interface Env {
   AVATARS?: R2Bucket
   RL_READ?: RateLimiterBinding
   RL_WRITE?: RateLimiterBinding
+  RL_AUTH?: RateLimiterBinding
   VAPID_PUBLIC?: string
   VAPID_PRIVATE?: string
   VAPID_SUBJECT?: string
@@ -181,6 +182,9 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
   }
   if (!(await checkRateLimit(request, isWrite, isWrite ? env.RL_WRITE : env.RL_READ)))
     return error(429, '요청이 너무 많아요. 잠시 후 다시 시도해주세요.')
+  // 인증 엔드포인트는 추가로 강한 제한 (무차별 대입·대량 가입 방어)
+  if (path.startsWith('/api/auth/') && method === 'POST' && !(await checkAuthRateLimit(request, env.RL_AUTH)))
+    return error(429, '시도가 너무 많아요. 잠시 후 다시 시도해주세요.')
 
   if (!env.DB) return error(503, '데이터베이스가 연결되지 않았어요')
   const db = env.DB
@@ -202,6 +206,8 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
       }
       const dup = await db.prepare('SELECT id FROM users WHERE nickname = ?').bind(nick).first()
       if (dup) return error(409, '이미 사용 중인 닉네임이에요.')
+      const cnt = await db.prepare('SELECT COUNT(*) AS c FROM users').first<{ c: number }>()
+      if ((cnt?.c ?? 0) >= MAX_USERS) return error(503, '가입이 일시적으로 제한됐어요. 잠시 후 다시 시도해주세요.')
       const salt = crypto.randomUUID()
       const hash = await hashPassword(b.password, salt)
       const ins = await db
@@ -222,6 +228,8 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
       if (!u || (await hashPassword(b.password, u.salt)) !== u.password_hash)
         return error(401, '닉네임 또는 비밀번호가 올바르지 않아요.')
       const token = await createSession(db, u.id)
+      // 만료 세션 정리(무한 증가 방지) — 응답 지연 없이 백그라운드
+      ctx.waitUntil(db.prepare("DELETE FROM sessions WHERE expires_at < strftime('%Y-%m-%dT%H:%M:%fZ','now')").run().then(() => {}))
       return json({ ok: true }, 200, { 'set-cookie': sessionSetCookie(token) })
     }
 
@@ -471,10 +479,17 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
   }
 }
 
-/** R2 아바타 공개 서빙 (/avatars/av/<id>) */
-async function serveAvatar(request: Request, env: Env): Promise<Response> {
+/** R2 아바타 공개 서빙 (/avatars/av/<id>?v=<ts>) — 엣지 캐시로 반복 R2 호출 차단 */
+async function serveAvatar(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405 })
   if (!env.AVATARS) return new Response('Not Found', { status: 404 })
+
+  // 엣지 캐시 조회 (버전 쿼리 포함 URL이 키 — 변경 시 자동 무효화)
+  const cache = caches.default
+  const cacheKey = new Request(new URL(request.url).toString(), { method: 'GET' })
+  const cached = await cache.match(cacheKey)
+  if (cached) return cached
+
   const key = decodeURIComponent(new URL(request.url).pathname.replace(/^\/avatars\//, ''))
   if (!/^av\/\d+$/.test(key)) return new Response('Not Found', { status: 404 })
   const obj = await env.AVATARS.get(key)
@@ -483,7 +498,9 @@ async function serveAvatar(request: Request, env: Env): Promise<Response> {
   obj.writeHttpMetadata(headers)
   headers.set('etag', obj.httpEtag)
   headers.set('cache-control', 'public, max-age=31536000, immutable')
-  return new Response(request.method === 'HEAD' ? null : obj.body, { headers })
+  const res = new Response(obj.body, { headers })
+  ctx.waitUntil(cache.put(cacheKey, res.clone())) // 이후 요청은 엣지에서 (R2 op·워커 CPU 절감)
+  return request.method === 'HEAD' ? new Response(null, { headers }) : res
 }
 
 export default {
@@ -493,7 +510,7 @@ export default {
       return withSecurityHeaders(await handleApi(request, env, ctx), true)
     }
     if (url.pathname.startsWith('/avatars/')) {
-      return withSecurityHeaders(await serveAvatar(request, env), false)
+      return withSecurityHeaders(await serveAvatar(request, env, ctx), false)
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       return withSecurityHeaders(error(405, '허용되지 않은 메서드예요'), true)

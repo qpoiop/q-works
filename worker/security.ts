@@ -8,6 +8,7 @@ export interface RateLimiterBinding {
 const WINDOW_MS = 60_000
 export const READ_LIMIT_PER_MIN = 120
 export const WRITE_LIMIT_PER_MIN = 30
+export const AUTH_LIMIT_PER_MIN = 8 // 로그인/회원가입: 무차별·대량가입 방어 (IP당 분당)
 
 /** 아이솔레이트 로컬 슬라이딩 윈도우 (바인딩 미지원 환경 폴백) */
 class MemoryLimiter {
@@ -34,6 +35,21 @@ class MemoryLimiter {
 
 const memRead = new MemoryLimiter(READ_LIMIT_PER_MIN)
 const memWrite = new MemoryLimiter(WRITE_LIMIT_PER_MIN)
+const memAuth = new MemoryLimiter(AUTH_LIMIT_PER_MIN)
+
+/** 인증 엔드포인트 전용 강한 제한 (IP당) — D1 쓰기 남용·무차별 대입 방어 */
+export async function checkAuthRateLimit(request: Request, binding?: RateLimiterBinding): Promise<boolean> {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown'
+  if (!memAuth.allow(ip)) return false
+  if (binding) {
+    try {
+      return (await binding.limit({ key: `auth:${ip}` })).success
+    } catch {
+      /* 폴백 */
+    }
+  }
+  return true
+}
 
 export async function checkRateLimit(
   request: Request,
@@ -89,9 +105,10 @@ export const FIELD_LIMITS = {
   id: 64
 } as const
 
-/** 저장 행 수 상한 */
+/** 저장 행 수 상한 (D1 저장 비용·남용 방지) */
 export const MAX_TASKS = 2000
 export const MAX_NOTIFICATIONS = 200
+export const MAX_USERS = 5000 // 대량 자동가입으로 D1 무한 증가 방지
 
 const SECURITY_HEADERS: Record<string, string> = {
   'x-content-type-options': 'nosniff',
