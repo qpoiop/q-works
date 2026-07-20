@@ -18,7 +18,7 @@ import ProfileMenu from './components/ProfileMenu'
 import SettingsModal from './components/SettingsModal'
 import Toasts from './components/Toasts'
 import ErrorState from './components/ErrorState'
-import SkeletonList from './components/Skeleton'
+import SplashScreen from './components/SplashScreen'
 import TodayView from './views/TodayView'
 import MyTasksView from './views/MyTasksView'
 import TimelineView from './views/TimelineView'
@@ -172,6 +172,7 @@ export default function App() {
   }
 
   // ---- 인증 게이트 ----
+  if (store.auth === 'loading') return <SplashScreen />
   if (store.auth === 'anon') {
     return (
       <>
@@ -186,7 +187,6 @@ export default function App() {
   const teamLabel = me?.teamName ?? '무소속'
 
   const viewBody = () => {
-    if (store.auth === 'loading') return <SkeletonList count={5} />
     if (store.error) return <ErrorState message={store.error} onRetry={store.reload} />
     const common = { canEdit: store.canEdit, onOpen: openEdit, onToggle: handleToggle }
     switch (view) {
