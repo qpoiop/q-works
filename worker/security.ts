@@ -101,7 +101,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   'cross-origin-opener-policy': 'same-origin',
   'content-security-policy':
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
-    "font-src https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self'; " +
+    "font-src https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self'; " +
     "manifest-src 'self'; worker-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 }
 

@@ -1,7 +1,7 @@
-/** 프로필 사진: 원본 최대 4MB 허용(시안), 업로드 전 256px JPEG data URL로 리사이즈 */
+/** 프로필 사진: 원본 최대 4MB 허용, 업로드 전 256px 정방형 JPEG Blob으로 리사이즈 */
 export const MAX_AVATAR_FILE_BYTES = 4 * 1024 * 1024
 
-export function fileToAvatarDataUrl(file: File): Promise<string> {
+export function fileToAvatarBlob(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     if (file.size > MAX_AVATAR_FILE_BYTES) {
       reject(new Error('이미지는 최대 4MB까지 가능해요'))
@@ -25,7 +25,7 @@ export function fileToAvatarDataUrl(file: File): Promise<string> {
       const sx = (img.width - min) / 2
       const sy = (img.height - min) / 2
       ctx.drawImage(img, sx, sy, min, min, 0, 0, size, size)
-      resolve(canvas.toDataURL('image/jpeg', 0.82))
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('이미지를 처리할 수 없어요'))), 'image/jpeg', 0.82)
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
@@ -33,4 +33,9 @@ export function fileToAvatarDataUrl(file: File): Promise<string> {
     }
     img.src = url
   })
+}
+
+/** 미리보기용 임시 오브젝트 URL (blob:) */
+export function blobPreviewUrl(blob: Blob): string {
+  return URL.createObjectURL(blob)
 }

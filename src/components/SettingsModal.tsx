@@ -3,7 +3,7 @@ import type { CSSProperties, ChangeEvent } from 'react'
 import type { Me, NickCheckStatus } from '../types'
 import { COLOR, memberMeta } from '../config/meta'
 import { api } from '../lib/api'
-import { fileToAvatarDataUrl } from '../lib/avatar'
+import { blobPreviewUrl, fileToAvatarBlob } from '../lib/avatar'
 import { useStore } from '../store/AppStore'
 import { TOAST_COLOR } from '../config/meta'
 
@@ -30,7 +30,8 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
   const store = useStore()
   const [nickname, setNickname] = useState(me.nickname)
   const [password, setPassword] = useState('')
-  const [avatar, setAvatar] = useState<string | null>(me.avatar)
+  const [avatar, setAvatar] = useState<string | null>(me.avatar) // 미리보기 URL(기존/blob:)
+  const [avatarBlob, setAvatarBlob] = useState<Blob | null | undefined>(undefined) // Blob=신규, null=삭제, undefined=변경없음
   const [nickStatus, setNickStatus] = useState<NickCheckStatus | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -56,10 +57,17 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
     e.target.value = ''
     if (!file) return
     try {
-      setAvatar(await fileToAvatarDataUrl(file))
+      const blob = await fileToAvatarBlob(file)
+      setAvatarBlob(blob)
+      setAvatar(blobPreviewUrl(blob)) // 저장 전 미리보기
     } catch (err) {
       store.toast((err as Error).message, TOAST_COLOR.danger)
     }
+  }
+
+  const removeAvatar = () => {
+    setAvatarBlob(null)
+    setAvatar(null)
   }
 
   const save = async () => {
@@ -73,10 +81,10 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
       store.toast('비밀번호는 4자 이상이어야 해요', TOAST_COLOR.danger)
       return
     }
-    const patch: { nickname?: string; password?: string; avatar?: string | null } = {}
+    const patch: { nickname?: string; password?: string; avatarBlob?: Blob | null } = {}
     if (nick !== me.nickname) patch.nickname = nick
     if (password) patch.password = password
-    if (avatar !== me.avatar) patch.avatar = avatar
+    if (avatarBlob !== undefined) patch.avatarBlob = avatarBlob
     setBusy(true)
     try {
       if (await store.updateProfile(patch)) onClose()
@@ -119,7 +127,7 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
                   <input type="file" accept="image/*" onChange={pickAvatar} style={{ display: 'none' }} />
                 </label>
                 {avatar && (
-                  <button className="btn-ghost" onClick={() => setAvatar(null)} style={{
+                  <button className="btn-ghost" onClick={removeAvatar} style={{
                     height: 36, padding: '0 12px', borderRadius: 9, border: '1px solid #e0e3e8', background: '#fff',
                     fontSize: 12.5, fontWeight: 600, color: '#8a94a6', cursor: 'pointer'
                   }}>

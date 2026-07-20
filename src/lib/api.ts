@@ -35,8 +35,11 @@ export const api = {
   login: (nickname: string, password: string) =>
     request<{ ok: true }>('/api/auth/login', { method: 'POST', body: JSON.stringify({ nickname, password }) }),
   logout: () => request<{ ok: true }>('/api/auth/logout', { method: 'POST', body: '{}' }),
-  updateMe: (patch: { nickname?: string; password?: string; avatar?: string | null }) =>
+  updateMe: (patch: { nickname?: string; password?: string }) =>
     request<Pick<Me, 'nickname' | 'teamCode' | 'avatar'>>('/api/me', { method: 'PATCH', body: JSON.stringify(patch) }),
+  uploadAvatar: (blob: Blob) =>
+    request<{ avatar: string }>('/api/me/avatar', { method: 'POST', body: blob, headers: { 'content-type': blob.type || 'image/jpeg' } }),
+  deleteAvatar: () => request<{ avatar: null }>('/api/me/avatar', { method: 'DELETE' }),
   nicknameCheck: (nick: string) =>
     request<{ status: NickCheckStatus }>(`/api/me/nickname-check?nick=${encodeURIComponent(nick)}`),
   joinTeam: (code: string) =>

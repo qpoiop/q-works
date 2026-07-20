@@ -17,12 +17,15 @@ import { sendPushToUser } from './webpush'
 export interface Env {
   DB?: D1Database
   ASSETS: Fetcher
+  AVATARS?: R2Bucket
   RL_READ?: RateLimiterBinding
   RL_WRITE?: RateLimiterBinding
   VAPID_PUBLIC?: string
   VAPID_PRIVATE?: string
   VAPID_SUBJECT?: string
 }
+
+const MAX_AVATAR_BYTES = 1024 * 1024 // R2 저장 원본 상한 (1MB)
 
 /* ---------- 공통 응답 ---------- */
 const json = (data: unknown, status = 200, headers: Record<string, string> = {}) =>
@@ -119,7 +122,6 @@ const PRIORITIES = ['높음', '보통', '낮음']
 const STATUSES = ['예정', '진행중', '완료']
 const NOTIF_TYPES = ['임박', '업데이트', '리마인드']
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
-const MAX_AVATAR_CHARS = 96 * 1024 // 클라이언트가 리사이즈한 data URL 기준
 
 function validateTaskInput(body: Partial<Task>, partial: boolean): string | null {
   if (!partial || body.title !== undefined) {
@@ -162,14 +164,20 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
   const path = url.pathname.replace(/\/+$/, '')
   const method = request.method
   const isWrite = method !== 'GET'
+  const isAvatarUpload = path === '/api/me/avatar' && method === 'POST' // 바이너리 업로드(더 큰 본문 허용)
 
   // ---- 과금 방어·보안 게이트 ----
   if (!API_METHODS.includes(method)) return error(405, '허용되지 않은 메서드예요')
   if (isWrite) {
     if (isCrossSiteMutation(request)) return error(403, '허용되지 않은 요청이에요')
-    if (bodyTooLarge(request)) return error(413, '요청 크기가 너무 커요')
-    if (['POST', 'PATCH', 'PUT'].includes(method) && !(request.headers.get('content-type') ?? '').includes('application/json'))
-      return error(415, '요청 형식이 올바르지 않아요')
+    if (isAvatarUpload) {
+      const len = Number(request.headers.get('content-length') ?? '0')
+      if (len > MAX_AVATAR_BYTES) return error(413, '이미지가 너무 커요 (최대 1MB)')
+    } else {
+      if (bodyTooLarge(request)) return error(413, '요청 크기가 너무 커요')
+      if (['POST', 'PATCH', 'PUT'].includes(method) && !(request.headers.get('content-type') ?? '').includes('application/json'))
+        return error(415, '요청 형식이 올바르지 않아요')
+    }
   }
   if (!(await checkRateLimit(request, isWrite, isWrite ? env.RL_WRITE : env.RL_READ)))
     return error(429, '요청이 너무 많아요. 잠시 후 다시 시도해주세요.')
@@ -275,11 +283,7 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
         const salt = crypto.randomUUID()
         updates.push('password_hash = ?', 'salt = ?'); binds.push(await hashPassword(b.password, salt), salt)
       }
-      if (b.avatar !== undefined) {
-        if (b.avatar !== null && (typeof b.avatar !== 'string' || !b.avatar.startsWith('data:image/') || b.avatar.length > MAX_AVATAR_CHARS))
-          return error(400, '이미지 형식이 올바르지 않아요')
-        updates.push('avatar = ?'); binds.push(b.avatar)
-      }
+      // 아바타는 /api/me/avatar (R2)로 처리 — PATCH에서는 무시
       if (updates.length) {
         await db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).bind(...binds, me.id).run()
         // 닉네임 변경 시 담당 업무·알림도 함께 이관
@@ -303,6 +307,27 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
       if (nick === me.nickname) return json({ status: 'same' })
       const dup = await db.prepare('SELECT id FROM users WHERE nickname = ?').bind(nick).first()
       return json({ status: dup ? 'dup' : 'ok' })
+    }
+
+    // 아바타 업로드 (바이너리 이미지 본문 → R2 저장, D1엔 URL만)
+    if (path === '/api/me/avatar' && method === 'POST') {
+      if (!env.AVATARS) return error(503, '이미지 저장소가 연결되지 않았어요')
+      const ct = request.headers.get('content-type') ?? ''
+      if (!ct.startsWith('image/')) return error(415, '이미지 파일만 업로드할 수 있어요')
+      const buf = await request.arrayBuffer()
+      if (buf.byteLength === 0) return error(400, '빈 파일이에요')
+      if (buf.byteLength > MAX_AVATAR_BYTES) return error(413, '이미지가 너무 커요 (최대 1MB)')
+      const key = `av/${me.id}`
+      await env.AVATARS.put(key, buf, { httpMetadata: { contentType: ct, cacheControl: 'public, max-age=31536000, immutable' } })
+      const urlPath = `/avatars/${key}?v=${Date.now()}` // 변경 즉시 반영되도록 버전 쿼리
+      await db.prepare('UPDATE users SET avatar = ? WHERE id = ?').bind(urlPath, me.id).run()
+      return json({ avatar: urlPath })
+    }
+
+    if (path === '/api/me/avatar' && method === 'DELETE') {
+      if (env.AVATARS) await env.AVATARS.delete(`av/${me.id}`).catch(() => {})
+      await db.prepare('UPDATE users SET avatar = NULL WHERE id = ?').bind(me.id).run()
+      return json({ avatar: null })
     }
 
     if (path === '/api/team/join' && method === 'POST') {
@@ -446,11 +471,29 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
   }
 }
 
+/** R2 아바타 공개 서빙 (/avatars/av/<id>) */
+async function serveAvatar(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed', { status: 405 })
+  if (!env.AVATARS) return new Response('Not Found', { status: 404 })
+  const key = decodeURIComponent(new URL(request.url).pathname.replace(/^\/avatars\//, ''))
+  if (!/^av\/\d+$/.test(key)) return new Response('Not Found', { status: 404 })
+  const obj = await env.AVATARS.get(key)
+  if (!obj) return new Response('Not Found', { status: 404 })
+  const headers = new Headers()
+  obj.writeHttpMetadata(headers)
+  headers.set('etag', obj.httpEtag)
+  headers.set('cache-control', 'public, max-age=31536000, immutable')
+  return new Response(request.method === 'HEAD' ? null : obj.body, { headers })
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
     if (url.pathname.startsWith('/api/')) {
       return withSecurityHeaders(await handleApi(request, env, ctx), true)
+    }
+    if (url.pathname.startsWith('/avatars/')) {
+      return withSecurityHeaders(await serveAvatar(request, env), false)
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') {
       return withSecurityHeaders(error(405, '허용되지 않은 메서드예요'), true)

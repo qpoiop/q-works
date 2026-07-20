@@ -33,7 +33,7 @@ interface StoreValue extends EmptyData {
   login: (nickname: string, password: string) => Promise<string | null>
   signup: (nickname: string, password: string, teamCode: string) => Promise<string | null>
   logout: () => Promise<void>
-  updateProfile: (patch: { nickname?: string; password?: string; avatar?: string | null }) => Promise<boolean>
+  updateProfile: (patch: { nickname?: string; password?: string; avatarBlob?: Blob | null }) => Promise<boolean>
   joinTeam: (code: string) => Promise<string | null>
   leaveTeam: () => Promise<void>
   saveTask: (form: TaskForm) => Promise<boolean>
@@ -127,16 +127,26 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setAuth('anon')
   }, [])
 
+  // avatarBlob: Blob=업로드, null=삭제, undefined=변경없음
   const updateProfile = useCallback(
-    async (patch: { nickname?: string; password?: string; avatar?: string | null }): Promise<boolean> => {
+    async (patch: { nickname?: string; password?: string; avatarBlob?: Blob | null }): Promise<boolean> => {
       try {
         const oldNick = dataRef.current.me?.nickname
-        const fresh = await api.updateMe(patch)
+        let avatar = dataRef.current.me?.avatar ?? null
+        // 아바타 먼저 처리(R2)
+        if (patch.avatarBlob instanceof Blob) avatar = (await api.uploadAvatar(patch.avatarBlob)).avatar
+        else if (patch.avatarBlob === null) avatar = (await api.deleteAvatar()).avatar
+        // 닉네임/비밀번호
+        let nickname = oldNick ?? ''
+        if (patch.nickname !== undefined || patch.password) {
+          const fresh = await api.updateMe({ nickname: patch.nickname, password: patch.password })
+          nickname = fresh.nickname
+        }
         setData((d) => ({
           ...d,
-          me: d.me ? { ...d.me, nickname: fresh.nickname, avatar: fresh.avatar } : d.me,
-          roster: d.roster.map((r) => (r.nickname === oldNick ? { ...r, nickname: fresh.nickname, avatar: fresh.avatar } : r)),
-          tasks: oldNick && oldNick !== fresh.nickname ? d.tasks.map((t) => (t.assignee === oldNick ? { ...t, assignee: fresh.nickname } : t)) : d.tasks
+          me: d.me ? { ...d.me, nickname, avatar } : d.me,
+          roster: d.roster.map((r) => (r.nickname === oldNick ? { ...r, nickname, avatar } : r)),
+          tasks: oldNick && oldNick !== nickname ? d.tasks.map((t) => (t.assignee === oldNick ? { ...t, assignee: nickname } : t)) : d.tasks
         }))
         toast('프로필이 저장됐어요', TOAST_COLOR.edit)
         return true
