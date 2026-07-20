@@ -1,6 +1,7 @@
 import type { AppNotification, Task } from './types'
 import schema1 from '../migrations/0001_init.sql'
 import schema2 from '../migrations/0002_auth_teams.sql'
+import schema3 from '../migrations/0003_push_subscriptions.sql'
 import {
   FIELD_LIMITS, MAX_NOTIFICATIONS, MAX_TASKS,
   bodyTooLarge, checkRateLimit, isCrossSiteMutation, withSecurityHeaders
@@ -11,14 +12,16 @@ import {
   sessionClearCookie, sessionSetCookie
 } from './auth'
 import type { SessionUser } from './auth'
-import { sendPushToUser } from './fcm'
+import { sendPushToUser } from './webpush'
 
 export interface Env {
   DB?: D1Database
   ASSETS: Fetcher
   RL_READ?: RateLimiterBinding
   RL_WRITE?: RateLimiterBinding
-  FCM_SERVICE_ACCOUNT?: string
+  VAPID_PUBLIC?: string
+  VAPID_PRIVATE?: string
+  VAPID_SUBJECT?: string
 }
 
 /* ---------- 공통 응답 ---------- */
@@ -31,7 +34,8 @@ class LimitError extends Error {}
 /* ---------- 마이그레이션 (CLI 권한 없는 토큰 대응: 워커가 직접 적용) ---------- */
 const MIGRATIONS: { name: string; sql: string }[] = [
   { name: '0001_init', sql: schema1 },
-  { name: '0002_auth_teams', sql: schema2 }
+  { name: '0002_auth_teams', sql: schema2 },
+  { name: '0003_push_subscriptions', sql: schema3 }
 ]
 
 /** 시안 시드 멤버 + 체험 계정 — users 시드용 (비밀번호 '1234') */
@@ -284,7 +288,7 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
           await db.batch([
             db.prepare('UPDATE tasks SET assignee = ? WHERE assignee = ?').bind(nick, me.nickname),
             db.prepare('UPDATE notifications SET user_nickname = ? WHERE user_nickname = ?').bind(nick, me.nickname),
-            db.prepare('UPDATE push_tokens SET user_nickname = ? WHERE user_nickname = ?').bind(nick, me.nickname)
+            db.prepare('UPDATE push_subscriptions SET user_nickname = ? WHERE user_nickname = ?').bind(nick, me.nickname)
           ])
         }
       }
@@ -389,7 +393,7 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
         db.prepare('DELETE FROM notifications WHERE user_nickname = ? AND id NOT IN (SELECT id FROM notifications WHERE user_nickname = ? ORDER BY created_at DESC LIMIT ?)')
           .bind(me.nickname, me.nickname, MAX_NOTIFICATIONS)
       ])
-      // FCM 푸시 (시크릿 설정 시에만 발송)
+      // Web Push (VAPID 설정 시에만 발송) — 앱이 닫혀 있어도 도착
       ctx.waitUntil(sendPushToUser(env, me.nickname, `업무 알림 · ${body.taskTitle}`, body.desc))
       return json({ id, type: body.type, taskId: body.taskId ?? null, taskTitle: body.taskTitle, desc: body.desc, createdAt, read: false }, 201)
     }
@@ -399,19 +403,37 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
       return new Response(null, { status: 204 })
     }
 
-    if (path === '/api/push/register' && method === 'POST') {
-      const b = (await request.json()) as { token?: string; platform?: string }
-      if (typeof b.token !== 'string' || !b.token || b.token.length > 512) return error(400, '토큰이 올바르지 않아요')
+    // 클라 VAPID 공개키 조회 (구독에 필요)
+    if (path === '/api/push/vapid-public' && method === 'GET') {
+      return json({ key: env.VAPID_PUBLIC ?? null })
+    }
+
+    // 실제 Web Push 테스트 발송 (내 구독 대상)
+    if (path === '/api/push/test' && method === 'POST') {
+      const subs = await db.prepare('SELECT COUNT(*) AS c FROM push_subscriptions WHERE user_nickname = ?').bind(me.nickname).first<{ c: number }>()
+      if ((subs?.c ?? 0) === 0) return error(409, '구독된 기기가 없어요. 알림을 먼저 켜주세요.')
+      ctx.waitUntil(sendPushToUser(env, me.nickname, '팀 작업 관리 · 테스트', '푸시 알림이 정상 동작해요. 🎉'))
+      return json({ ok: true, devices: subs!.c })
+    }
+
+    if (path === '/api/push/subscribe' && method === 'POST') {
+      const b = (await request.json()) as { endpoint?: string; keys?: { p256dh?: string; auth?: string } }
+      if (
+        typeof b.endpoint !== 'string' || !/^https:\/\//.test(b.endpoint) || b.endpoint.length > 1024 ||
+        !b.keys || typeof b.keys.p256dh !== 'string' || typeof b.keys.auth !== 'string' ||
+        b.keys.p256dh.length > 200 || b.keys.auth.length > 100
+      )
+        return error(400, '구독 정보가 올바르지 않아요')
       await db
-        .prepare('INSERT OR REPLACE INTO push_tokens (token, user_nickname, platform) VALUES (?, ?, ?)')
-        .bind(b.token, me.nickname, (b.platform ?? 'web').slice(0, 20))
+        .prepare('INSERT OR REPLACE INTO push_subscriptions (endpoint, user_nickname, p256dh, auth) VALUES (?, ?, ?, ?)')
+        .bind(b.endpoint, me.nickname, b.keys.p256dh, b.keys.auth)
         .run()
       return json({ ok: true }, 201)
     }
 
-    if (path === '/api/push/unregister' && method === 'POST') {
-      const b = (await request.json()) as { token?: string }
-      if (typeof b.token === 'string' && b.token) await db.prepare('DELETE FROM push_tokens WHERE token = ?').bind(b.token).run()
+    if (path === '/api/push/unsubscribe' && method === 'POST') {
+      const b = (await request.json()) as { endpoint?: string }
+      if (typeof b.endpoint === 'string' && b.endpoint) await db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').bind(b.endpoint).run()
       return json({ ok: true })
     }
 

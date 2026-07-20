@@ -21,5 +21,11 @@
   "ratelimits": [
     { "name": "RL_READ", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
     { "name": "RL_WRITE", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
-  ]
+  ],
+  // Web Push(VAPID) — 공개키·subject는 공개값(vars). 비밀키는 시크릿:
+  //   npx wrangler secret put VAPID_PRIVATE
+  "vars": {
+    "VAPID_PUBLIC": "BPC5SRAodVabIqXBlqYNOw3iWeyJ8V1Prt4zGXuqISQGBBPcvbOD6ZFaU4NZvaAcIdfmCooD-3ugt8zn10rIikk",
+    "VAPID_SUBJECT": "mailto:qpoiop3@gmail.com"
+  }
 }

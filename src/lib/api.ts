@@ -50,10 +50,7 @@ export const api = {
   createNotification: (n: Omit<AppNotification, 'id' | 'createdAt' | 'read'>) =>
     request<AppNotification>('/api/notifications', { method: 'POST', body: JSON.stringify(n) }),
   markAllRead: () => request<void>('/api/notifications/read-all', { method: 'POST', body: '{}' }),
-  registerPush: (token: string, platform = 'web') =>
-    request<{ ok: true }>('/api/push/register', { method: 'POST', body: JSON.stringify({ token, platform }) }),
-  unregisterPush: (token: string) =>
-    request<{ ok: true }>('/api/push/unregister', { method: 'POST', body: JSON.stringify({ token }) })
+  testPush: () => request<{ ok: true; devices: number }>('/api/push/test', { method: 'POST', body: '{}' })
 }
 
 export { ApiError }

@@ -6,8 +6,14 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest', // 커스텀 SW(src/sw.ts) — Web Push 핸들러 포함
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'og-image.png'],
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}']
+      },
       manifest: {
         name: '팀 작업 관리',
         short_name: '작업관리',
@@ -19,16 +25,6 @@ export default defineConfig({
         theme_color: '#3563e8',
         icons: [
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-        ]
-      },
-      workbox: {
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/.*/,
-            handler: 'CacheFirst',
-            options: { cacheName: 'fonts', expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 365 } }
-          }
         ]
       }
     })

@@ -5,6 +5,8 @@ import { NAV_ITEMS, TOAST_COLOR } from './config/meta'
 import { useStore } from './store/AppStore'
 import { diffDays, toDateStr, today } from './lib/date'
 import { checkDeadlines, fireBrowserNotif, notifPermission, notifSupported } from './lib/notify'
+import { subscribePush } from './lib/push'
+import { api } from './lib/api'
 import { usePwaInstall } from './lib/usePwaInstall'
 import AuthPage from './components/AuthPage'
 import Sidebar from './components/Sidebar'
@@ -72,9 +74,12 @@ export default function App() {
     [tasks, me]
   )
 
-  // 로그인 완료 후 권한이 이미 허용돼 있으면 마감 임박 브라우저 알림
+  // 로그인 완료 후 권한이 이미 허용돼 있으면 마감 임박 알림 + Web Push 구독 갱신
   useEffect(() => {
-    if (store.auth === 'authed' && permission === 'granted') checkDeadlines(tasks, me?.nickname)
+    if (store.auth === 'authed' && permission === 'granted') {
+      checkDeadlines(tasks, me?.nickname)
+      void subscribePush()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store.auth, me?.nickname])
 
@@ -140,29 +145,37 @@ export default function App() {
       store.toast('이 브라우저는 알림을 지원하지 않아요', TOAST_COLOR.danger)
       return
     }
-    Notification.requestPermission().then((p) => {
+    Notification.requestPermission().then(async (p) => {
       setPermission(p)
       if (p === 'granted') {
         store.toast('브라우저 알림을 켰어요', TOAST_COLOR.create)
         fireBrowserNotif('팀 작업 관리', '마감 임박·업데이트를 알려드릴게요.')
         checkDeadlines(tasks, me?.nickname)
+        // 앱이 닫혀 있어도 알림 받도록 Web Push 구독
+        await subscribePush()
       } else {
         store.toast('알림 권한이 거부됐어요', TOAST_COLOR.danger)
       }
     })
   }
 
-  const testNotif = () => {
+  const testNotif = async () => {
     if (!notifSupported()) {
       store.toast('알림을 지원하지 않는 브라우저예요', TOAST_COLOR.danger)
       return
     }
-    if (Notification.permission === 'granted') {
-      const sample = notifications[0]
-      fireBrowserNotif(sample?.taskTitle ?? '팀 작업 관리', (sample?.desc ?? '알림이 잘 동작해요.') + ' (테스트)')
-      store.toast('테스트 알림을 보냈어요', TOAST_COLOR.edit)
-    } else {
+    if (Notification.permission !== 'granted') {
       enableNotif()
+      return
+    }
+    // 서버 실제 Web Push 시도(앱 닫혀 있어도 도착). 미설정/실패 시 로컬 알림 폴백.
+    try {
+      await subscribePush()
+      await api.testPush()
+      store.toast('테스트 푸시를 보냈어요', TOAST_COLOR.edit)
+    } catch {
+      fireBrowserNotif('팀 작업 관리', '알림이 잘 동작해요. (테스트)')
+      store.toast('테스트 알림을 보냈어요', TOAST_COLOR.edit)
     }
   }
 
