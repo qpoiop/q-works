@@ -32,6 +32,7 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
   const [password, setPassword] = useState('')
   const [avatar, setAvatar] = useState<string | null>(me.avatar)
   const [nickStatus, setNickStatus] = useState<NickCheckStatus | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const previewName = nickname.trim() || me.nickname
   const meta = memberMeta(previewName)
@@ -62,6 +63,7 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
   }
 
   const save = async () => {
+    if (busy) return
     const nick = nickname.trim()
     if (!nick) {
       store.toast('닉네임을 입력하세요', TOAST_COLOR.danger)
@@ -75,7 +77,12 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
     if (nick !== me.nickname) patch.nickname = nick
     if (password) patch.password = password
     if (avatar !== me.avatar) patch.avatar = avatar
-    if (await store.updateProfile(patch)) onClose()
+    setBusy(true)
+    try {
+      if (await store.updateProfile(patch)) onClose()
+    } finally {
+      setBusy(false)
+    }
   }
 
   const nickMsg = nickStatus ? NICK_MSG[nickStatus] : null
@@ -186,11 +193,11 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
           }}>
             취소
           </button>
-          <button className="btn-primary" onClick={save} style={{
+          <button className="btn-primary" onClick={save} disabled={busy} style={{
             height: 40, padding: '0 20px', borderRadius: 10, border: 'none', background: COLOR.primary, color: '#fff',
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px oklch(0.54 0.16 264/.3)'
+            fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer', boxShadow: '0 2px 8px oklch(0.54 0.16 264/.3)', opacity: busy ? 0.7 : 1
           }}>
-            저장
+            {busy ? '저장 중…' : '저장'}
           </button>
         </div>
       </div>
