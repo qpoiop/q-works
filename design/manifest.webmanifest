@@ -1,0 +1,11 @@
+{
+  "name": "팀 작업 관리",
+  "short_name": "작업관리",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#eef0f3",
+  "theme_color": "#5a54d4",
+  "icons": [
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

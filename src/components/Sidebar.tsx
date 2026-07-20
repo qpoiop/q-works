@@ -1,6 +1,7 @@
 import { COLOR, NAV_ITEMS } from '../config/meta'
 import type { Me, ViewKey } from '../types'
 import Avatar from './Avatar'
+import Logo from './Logo'
 
 interface Props {
   view: ViewKey
@@ -17,12 +18,7 @@ export default function Sidebar({ view, onNavigate, badgeCount, me, onProfile }:
       display: 'flex', flexDirection: 'column', padding: '20px 14px 16px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 18px' }}>
-        <span style={{
-          width: 30, height: 30, borderRadius: 9, background: COLOR.primary, color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15
-        }}>
-          T
-        </span>
+        <Logo size={30} />
         <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>팀 작업 관리</span>
       </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

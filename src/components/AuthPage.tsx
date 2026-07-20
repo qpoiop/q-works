@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { COLOR, DEMO_TEAM_CODES } from '../config/meta'
 import { useStore } from '../store/AppStore'
+import Logo from './Logo'
 
 const inputStyle: CSSProperties = {
   width: '100%', height: 44, padding: '0 14px', border: '1px solid #e0e3e8', borderRadius: 11, fontSize: 14, background: '#fff'
@@ -62,12 +63,7 @@ export default function AuthPage() {
         boxShadow: '0 30px 70px rgba(16,24,40,.4)', padding: '30px 28px', margin: 'auto'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 22 }}>
-          <span style={{
-            width: 38, height: 38, borderRadius: 11, background: COLOR.primary, color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 18
-          }}>
-            T
-          </span>
+          <Logo size={42} />
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.4px' }}>팀 작업 관리</div>
             <div style={{ fontSize: 12, color: '#8a94a6' }}>할 일 · 마일스톤 · 팀 타임라인</div>
