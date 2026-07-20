@@ -42,7 +42,7 @@ export default function TimelineView({ tasks, me, canEdit, onOpen, onToggle }: P
         const group = [...byDate.get(d)!].sort((a, b) => Number(a.status === '완료') - Number(b.status === '완료'))
         return (
           <div key={d} style={{ display: 'flex', gap: 16 }}>
-            <div style={{ flex: 'none', width: 118, paddingTop: 2, textAlign: 'right' }}>
+            <div className="tl-date">
               <div style={{ fontSize: 13, fontWeight: 700, color: meta.labelColor }}>{fmtDate(d)}</div>
               <div style={{ fontSize: 11.5, color: '#9aa0aa' }}>{weekdayOf(d)}요일</div>
               {meta.badge && (
