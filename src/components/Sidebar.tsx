@@ -46,7 +46,7 @@ export default function Sidebar({ view, onNavigate, badgeCount, me, onProfile }:
               {badge > 0 && (
                 <span style={{
                   flex: 'none', fontSize: 11, fontWeight: 700, minWidth: 19, height: 19, padding: '0 5px',
-                  borderRadius: 10, background: 'oklch(0.95 0.04 25)', color: 'oklch(0.5 0.19 25)',
+                  borderRadius: 10, background: 'oklch(0.6 0.19 25)', color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                   {badge}

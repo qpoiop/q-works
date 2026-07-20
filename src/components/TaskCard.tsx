@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
 import type { Task } from '../types'
 import { PRIORITY_META, STATUS_META, memberMeta } from '../config/meta'
@@ -11,7 +12,7 @@ interface Props {
 }
 
 /** 시안 TaskCard.dc.html + v2 완료 토글·권한 상태 1:1 구현 */
-export default function TaskCard({ task, editable, onOpen, onToggle }: Props) {
+function TaskCard({ task, editable, onOpen, onToggle }: Props) {
   const done = task.status === '완료'
   const due = dueMeta(task.due, done)
   const st = STATUS_META[task.status]
@@ -128,3 +129,5 @@ export default function TaskCard({ task, editable, onOpen, onToggle }: Props) {
     </div>
   )
 }
+
+export default memo(TaskCard)

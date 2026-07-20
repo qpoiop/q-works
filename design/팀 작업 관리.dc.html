@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'Pretendard Variable','Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;background:#eef0f3;color:#1a1d21;-webkit-font-smoothing:antialiased}
+a{color:oklch(0.54 0.16 264);text-decoration:none}
+a:hover{color:oklch(0.46 0.16 264)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#d3d8e0;border-radius:6px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#bfc6d1;border:2px solid transparent;background-clip:content-box}
+input,select,textarea,button{font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:oklch(0.54 0.16 264)!important;box-shadow:0 0 0 3px oklch(0.54 0.16 264/.12)}
+@keyframes omSlideUp{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes omFade{from{opacity:0}to{opacity:1}}
+@keyframes omToast{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes omPop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;flex-direction:column;background:#eef0f3;overflow:hidden">
+  <sc-if value="{{ loggedIn }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1;display:flex;min-height:0">
+    <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+      <aside style="flex:none;width:240px;background:#fff;border-right:1px solid #e8eaed;display:flex;flex-direction:column;padding:20px 14px 16px">
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 18px">
+          <span style="width:30px;height:30px;border-radius:9px;background:oklch(0.54 0.16 264);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px">T</span>
+          <span style="font-size:15px;font-weight:700;letter-spacing:-.2px">팀 작업 관리</span>
+        </div>
+        <nav style="display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+            <button onClick="{{ item.onClick }}" style="{{ item.style }}">
+              <span style="flex:none;width:6px;height:6px;border-radius:50%;background:{{ item.dot }}"></span>
+              <span style="flex:1;text-align:left">{{ item.label }}</span>
+              <sc-if value="{{ item.showBadge }}" hint-placeholder-val="{{ false }}"><span style="flex:none;font-size:11px;font-weight:700;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:{{ item.badgeBg }};color:{{ item.badgeColor }};display:flex;align-items:center;justify-content:center">{{ item.badge }}</span></sc-if>
+            </button>
+          </sc-for>
+        </nav>
+        <button onClick="{{ onProfile }}" style="margin-top:auto;display:flex;align-items:center;gap:10px;padding:11px 10px;border-top:1px solid #eef0f3;border-left:none;border-right:none;border-bottom:none;background:transparent;cursor:pointer;text-align:left;border-radius:0" style-hover="background:#f7f8fa">
+          <span style="flex:none;width:34px;height:34px;border-radius:50%;background:{{ meAvatarCss }};background-size:cover;background-position:center;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">{{ meAvatarText }}</span>
+          <div style="flex:1;min-width:0;line-height:1.3"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ meNick }}</div><div style="font-size:11px;color:#8a94a6">{{ meTeamLabel }}</div></div>
+          <span style="flex:none;color:#c2c8d2;font-size:15px">⋯</span>
+        </button>
+      </aside>
+    </sc-if>
+    <main style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <header style="flex:none;display:flex;align-items:center;gap:12px;padding:15px 22px;background:#fff;border-bottom:1px solid #e8eaed;z-index:2">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:18px;font-weight:700;letter-spacing:-.3px">{{ viewTitle }}</div>
+          <div style="font-size:12.5px;color:#8a94a6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ viewSubtitle }}</div>
+        </div>
+        <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onProfile }}" title="내 프로필" style="flex:none;width:38px;height:38px;border-radius:50%;border:1px solid #e0e3e8;background:{{ meAvatarCss }};background-size:cover;background-position:center;color:#fff;font-size:12px;font-weight:700;cursor:pointer;padding:0">{{ meAvatarText }}</button>
+        </sc-if>
+        <button onClick="{{ onBell }}" title="알림" style="position:relative;flex:none;height:38px;padding:0 14px;border-radius:10px;border:1px solid #e0e3e8;background:#fff;font-size:13px;font-weight:600;color:#4b5563;cursor:pointer" style-hover="background:#f7f8fa">알림<sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:oklch(0.6 0.19 25);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ unreadCount }}</span></sc-if></button>
+        <button onClick="{{ onNew }}" style="flex:none;height:38px;padding:0 16px;border-radius:10px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px oklch(0.54 0.16 264/.3)" style-hover="background:oklch(0.48 0.16 264)">+ 새 업무</button>
+      </header>
+      <div style="flex:1;overflow-y:auto;padding:22px" key="{{ view }}">
+        <div style="max-width:940px;margin:0 auto;animation:omFade .25s ease">
+
+          <sc-if value="{{ isToday }}" hint-placeholder-val="{{ true }}">
+            <sc-if value="{{ installOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:14px;background:linear-gradient(100deg,oklch(0.54 0.16 264),oklch(0.55 0.16 290));color:#fff;margin-bottom:14px;box-shadow:0 6px 20px oklch(0.54 0.16 264/.28)">
+                <div style="flex:1"><div style="font-size:14px;font-weight:700">홈 화면에 설치하기</div><div style="font-size:12.5px;opacity:.9;margin-top:2px">앱처럼 바로 열고, 마감·알림을 놓치지 마세요.</div></div>
+                <button onClick="{{ onInstall }}" style="flex:none;height:34px;padding:0 14px;border-radius:9px;border:none;background:#fff;color:oklch(0.5 0.16 264);font-size:12.5px;font-weight:700;cursor:pointer">설치</button>
+                <button onClick="{{ onDismissInstall }}" style="flex:none;width:30px;height:30px;border-radius:8px;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:15px;cursor:pointer">×</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ showNotifBanner }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:14px;padding:13px 18px;border-radius:14px;background:#fff;border:1px solid #e8eaed;margin-bottom:14px">
+                <span style="flex:none;width:34px;height:34px;border-radius:50%;background:oklch(0.96 0.05 75);color:oklch(0.5 0.14 65);display:flex;align-items:center;justify-content:center;font-weight:800">!</span>
+                <div style="flex:1"><div style="font-size:13.5px;font-weight:700">브라우저 알림을 켜세요</div><div style="font-size:12px;color:#8a94a6;margin-top:1px">마감 임박·업무 업데이트를 실시간으로 알려드려요.</div></div>
+                <button onClick="{{ onEnableNotif }}" style="flex:none;height:34px;padding:0 14px;border-radius:9px;border:1px solid oklch(0.54 0.16 264);background:oklch(0.96 0.03 264);color:oklch(0.48 0.16 264);font-size:12.5px;font-weight:700;cursor:pointer">알림 켜기</button>
+              </div>
+            </sc-if>
+
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px">
+              <div style="background:#fff;border:1px solid #eceef1;border-radius:14px;padding:16px 18px">
+                <div style="font-size:12.5px;color:#8a94a6;font-weight:600">남은 작업</div>
+                <div style="font-size:30px;font-weight:800;margin-top:4px;letter-spacing:-1px">{{ stats.remaining }}</div>
+              </div>
+              <div style="background:#fff;border:1px solid #eceef1;border-radius:14px;padding:16px 18px">
+                <div style="font-size:12.5px;color:oklch(0.5 0.19 25);font-weight:600">오늘·지연 마감</div>
+                <div style="font-size:30px;font-weight:800;margin-top:4px;letter-spacing:-1px;color:oklch(0.5 0.19 25)">{{ stats.due }}</div>
+              </div>
+              <div style="background:#fff;border:1px solid #eceef1;border-radius:14px;padding:16px 18px">
+                <div style="font-size:12.5px;color:oklch(0.5 0.12 150);font-weight:600">완료</div>
+                <div style="font-size:30px;font-weight:800;margin-top:4px;letter-spacing:-1px;color:oklch(0.5 0.12 150)">{{ stats.done }}</div>
+              </div>
+            </div>
+
+            <sc-if value="{{ hasOverdue }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px;font-weight:700;color:oklch(0.5 0.19 25)">마감 초과</span><span style="font-size:12px;font-weight:700;color:oklch(0.5 0.19 25);background:oklch(0.95 0.04 25);padding:2px 8px;border-radius:8px">{{ overdueCount }}</span></div>
+              <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:24px">
+                <sc-for list="{{ overdue }}" as="item" hint-placeholder-count="1"><dc-import name="TaskCard" task="{{ item }}" hint-size="100%,104px"></dc-import></sc-for>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px;font-weight:700">오늘 할 일</span><span style="font-size:12px;color:#8a94a6">{{ todayLabel }}</span></div>
+            <sc-if value="{{ hasToday }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:24px">
+                <sc-for list="{{ todayTasks }}" as="item" hint-placeholder-count="2"><dc-import name="TaskCard" task="{{ item }}" hint-size="100%,104px"></dc-import></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noToday }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:22px;text-align:center;color:#9aa0aa;font-size:13px;background:#fff;border:1px dashed #dfe3e8;border-radius:14px;margin-bottom:24px">오늘 마감인 내 업무가 없어요.</div>
+            </sc-if>
+
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-size:15px;font-weight:700">앞으로 할 일</span></div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ upcoming }}" as="item" hint-placeholder-count="3"><dc-import name="TaskCard" task="{{ item }}" hint-size="100%,104px"></dc-import></sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isMyTasks }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+              <sc-for list="{{ myFilters }}" as="f" hint-placeholder-count="4">
+                <button onClick="{{ f.onClick }}" style="{{ f.style }}">{{ f.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ myTasks }}" as="item" hint-placeholder-count="5"><dc-import name="TaskCard" task="{{ item }}" hint-size="100%,104px"></dc-import></sc-for>
+            </div>
+            <sc-if value="{{ myEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:22px;text-align:center;color:#9aa0aa;font-size:13px;background:#fff;border:1px dashed #dfe3e8;border-radius:14px">해당하는 업무가 없어요.</div></sc-if>
+          </sc-if>
+
+          <sc-if value="{{ isTimeline }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ timeline }}" as="g" hint-placeholder-count="4">
+                <div style="display:flex;gap:16px">
+                  <div style="flex:none;width:118px;padding-top:2px;text-align:right">
+                    <div style="font-size:13px;font-weight:700;color:{{ g.labelColor }}">{{ g.dateLabel }}</div>
+                    <div style="font-size:11.5px;color:#9aa0aa">{{ g.weekday }}</div>
+                    <sc-if value="{{ g.showBadge }}" hint-placeholder-val="{{ false }}"><span style="display:inline-block;margin-top:5px;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:7px;background:{{ g.badgeBg }};color:{{ g.badgeColor }}">{{ g.badge }}</span></sc-if>
+                  </div>
+                  <div style="flex:none;position:relative;width:14px;display:flex;justify-content:center">
+                    <div style="position:absolute;top:5px;bottom:-2px;width:2px;background:#e4e7ec"></div>
+                    <div style="position:relative;z-index:1;width:12px;height:12px;border-radius:50%;background:{{ g.dot }};border:2px solid #fff;box-shadow:0 0 0 1px {{ g.dot }};margin-top:3px"></div>
+                  </div>
+                  <div style="flex:1;padding-bottom:20px;display:flex;flex-direction:column;gap:9px;min-width:0">
+                    <sc-for list="{{ g.tasks }}" as="item" hint-placeholder-count="1"><dc-import name="TaskCard" task="{{ item }}" hint-size="100%,104px"></dc-import></sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isMilestone }}" hint-placeholder-val="{{ false }}">
+            <sc-if value="{{ needTeam }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:420px;margin:40px auto;text-align:center;background:#fff;border:1px solid #eceef1;border-radius:18px;padding:34px 28px">
+                <div style="width:52px;height:52px;border-radius:15px;background:oklch(0.96 0.03 264);color:oklch(0.5 0.16 264);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 16px">＃</div>
+                <div style="font-size:17px;font-weight:700;margin-bottom:6px">팀 마일스톤은 팀 참여 후 볼 수 있어요</div>
+                <div style="font-size:13px;color:#8a94a6;line-height:1.6;margin-bottom:20px">팀 메뉴에서 팀 코드를 입력해 참여해 주세요.</div>
+                <input value="{{ teamJoin }}" onChange="{{ setTeamJoin }}" placeholder="팀 코드 입력 (예: PROD2026)" style="width:100%;height:46px;padding:0 15px;border:1px solid #e0e3e8;border-radius:12px;font-size:14px;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px" />
+                <sc-if value="{{ hasTeamJoinError }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:oklch(0.55 0.19 25);margin-bottom:10px">{{ teamJoinError }}</div></sc-if>
+                <button onClick="{{ onJoinTeam }}" style="width:100%;height:46px;border-radius:12px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:oklch(0.48 0.16 264)">팀 참여하기</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ inTeam }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ milestones }}" as="m" hint-placeholder-count="3">
+                <div style="background:#fff;border:1px solid #eceef1;border-radius:16px;padding:18px 20px">
+                  <div style="display:flex;align-items:flex-start;gap:12px">
+                    <span style="flex:none;width:10px;height:10px;border-radius:50%;background:{{ m.color }};margin-top:6px"></span>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:16px;font-weight:700;letter-spacing:-.2px">{{ m.title }}</div>
+                      <div style="font-size:12.5px;color:#8a94a6;margin-top:2px">목표 {{ m.dueLabel }} · {{ m.remainLabel }}</div>
+                    </div>
+                    <div style="flex:none;text-align:right"><div style="font-size:20px;font-weight:800;color:{{ m.color }}">{{ m.percent }}%</div><div style="font-size:11.5px;color:#9aa0aa">{{ m.doneCount }}/{{ m.total }} 완료</div></div>
+                  </div>
+                  <div style="height:8px;border-radius:6px;background:#eef0f3;margin:14px 0 16px;overflow:hidden"><div style="height:100%;width:{{ m.percent }}%;background:{{ m.color }};border-radius:6px;transition:width .4s"></div></div>
+                  <div style="display:flex;flex-direction:column;gap:7px">
+                    <sc-for list="{{ m.tasks }}" as="mt" hint-placeholder-count="2">
+                      <div onClick="{{ mt.open }}" style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:#f8f9fb;cursor:pointer" style-hover="background:#f1f3f6">
+                        <span style="flex:none;width:16px;height:16px;border-radius:5px;border:2px solid {{ mt.checkBorder }};background:{{ mt.checkBg }};color:{{ mt.checkMarkColor }};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">✓</span>
+                        <span style="flex:1;font-size:13px;font-weight:500;text-decoration:{{ mt.titleDeco }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ mt.title }}</span>
+                        <span style="flex:none;font-size:11.5px;color:#8a94a6">{{ mt.assignee }}</span>
+                        <span style="flex:none;font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:{{ mt.dueBg }};color:{{ mt.dueColor }}">{{ mt.dueLabel }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            </sc-if>
+          </sc-if>
+
+          <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+            <div style="background:#fff;border:1px solid #eceef1;border-radius:16px;padding:18px 20px 22px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <div style="font-size:17px;font-weight:700">{{ calLabel }}</div>
+                <div style="display:flex;gap:6px">
+                  <button onClick="{{ onCalPrev }}" style="width:34px;height:34px;border-radius:9px;border:1px solid #e0e3e8;background:#fff;font-size:16px;color:#4b5563;cursor:pointer" style-hover="background:#f7f8fa">‹</button>
+                  <button onClick="{{ onCalToday }}" style="height:34px;padding:0 12px;border-radius:9px;border:1px solid #e0e3e8;background:#fff;font-size:12.5px;font-weight:600;color:#4b5563;cursor:pointer" style-hover="background:#f7f8fa">오늘</button>
+                  <button onClick="{{ onCalNext }}" style="width:34px;height:34px;border-radius:9px;border:1px solid #e0e3e8;background:#fff;font-size:16px;color:#4b5563;cursor:pointer" style-hover="background:#f7f8fa">›</button>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px">
+                <sc-for list="{{ weekdayHeads }}" as="wd" hint-placeholder-count="7"><div style="text-align:center;font-size:11.5px;font-weight:700;color:{{ wd.color }};padding:4px 0">{{ wd.label }}</div></sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+                <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+                  <div style="min-height:88px;border-radius:10px;border:1px solid {{ c.borderColor }};background:{{ c.bg }};padding:6px 7px;overflow:hidden">
+                    <div style="font-size:12px;font-weight:{{ c.numWeight }};color:{{ c.numColor }};margin-bottom:4px">{{ c.dayNum }}</div>
+                    <div style="display:flex;flex-direction:column;gap:3px">
+                      <sc-for list="{{ c.chips }}" as="ch" hint-placeholder-count="1">
+                        <div onClick="{{ ch.open }}" style="display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:500;padding:2px 5px;border-radius:5px;background:{{ ch.bg }};color:{{ ch.color }};cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="flex:none;width:5px;height:5px;border-radius:50%;background:{{ ch.dot }}"></span>{{ ch.title }}</div>
+                      </sc-for>
+                      <sc-if value="{{ c.hasMore }}" hint-placeholder-val="{{ false }}"><div style="font-size:10px;color:#9aa0aa;padding-left:5px">+{{ c.moreCount }}건</div></sc-if>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+            <sc-if value="{{ inTeam }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:oklch(0.97 0.02 264);border:1px solid oklch(0.9 0.04 264);margin-bottom:16px">
+                <span style="flex:none;width:8px;height:8px;border-radius:50%;background:oklch(0.54 0.16 264)"></span>
+                <span style="font-size:12.5px;color:oklch(0.42 0.1 264)">공개로 설정된 팀 업무 {{ teamCount }}건이 실시간으로 공유되고 있어요.</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:9px">
+                <sc-for list="{{ teamTasks }}" as="item" hint-placeholder-count="6"><dc-import name="TaskCard" task="{{ item }}" hint-size="100%,104px"></dc-import></sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ needTeam }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:420px;margin:40px auto;text-align:center;background:#fff;border:1px solid #eceef1;border-radius:18px;padding:34px 28px">
+                <div style="width:52px;height:52px;border-radius:15px;background:oklch(0.96 0.03 264);color:oklch(0.5 0.16 264);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;margin:0 auto 16px">＃</div>
+                <div style="font-size:17px;font-weight:700;margin-bottom:6px">팀에 참여해 보세요</div>
+                <div style="font-size:13px;color:#8a94a6;line-height:1.6;margin-bottom:20px">아직 소속된 팀이 없어요. 팀 코드를 입력하면 팀의 공개 업무·타임라인·마일스톤을 함께 볼 수 있어요.</div>
+                <input value="{{ teamJoin }}" onChange="{{ setTeamJoin }}" placeholder="팀 코드 입력 (예: PROD2026)" style="width:100%;height:46px;padding:0 15px;border:1px solid #e0e3e8;border-radius:12px;font-size:14px;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px" />
+                <sc-if value="{{ hasTeamJoinError }}" hint-placeholder-val="{{ false }}"><div style="font-size:12.5px;color:oklch(0.55 0.19 25);margin-bottom:10px">{{ teamJoinError }}</div></sc-if>
+                <button onClick="{{ onJoinTeam }}" style="width:100%;height:46px;border-radius:12px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:oklch(0.48 0.16 264)">팀 참여하기</button>
+                <div style="font-size:11.5px;color:#b0b6c0;margin-top:14px">체험용 팀 코드: PROD2026 · DESIGN01 · GROWTH22</div>
+              </div>
+            </sc-if>
+          </sc-if>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+    <nav style="flex:none;display:flex;justify-content:center;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid #edeff2;padding:8px 10px calc(10px + env(safe-area-inset-bottom))">
+      <div style="display:flex;align-items:stretch;width:100%;max-width:620px">
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="6">
+          <button onClick="{{ item.onClick }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:3px 2px;border:none;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent">
+            <span style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;max-width:64px;height:32px;border-radius:12px;background:{{ item.mPillBg }};transition:background .15s">
+              {{ item.icon }}
+              <sc-if value="{{ item.showBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-3px;right:8px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;background:{{ item.badgeBg }};color:{{ item.badgeColor }};font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff">{{ item.badge }}</span></sc-if>
+            </span>
+            <span style="font-size:11px;font-weight:{{ item.mWeight }};color:{{ item.mColor }};white-space:nowrap;letter-spacing:-.4px">{{ item.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </nav>
+  </sc-if>
+  </sc-if>
+
+  <sc-if value="{{ notLoggedIn }}" hint-placeholder-val="{{ true }}">
+    <div style="position:fixed;inset:0;background:radial-gradient(120% 100% at 50% 0%,oklch(0.55 0.14 275) 0%,oklch(0.42 0.13 285) 60%,oklch(0.34 0.1 290) 100%);display:flex;align-items:center;justify-content:center;padding:22px;z-index:80;overflow-y:auto">
+      <div style="width:100%;max-width:420px;background:#fff;border-radius:22px;box-shadow:0 30px 70px rgba(16,24,40,.4);padding:30px 28px;animation:omPop .25s ease;margin:auto">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
+          <span style="width:38px;height:38px;border-radius:11px;background:oklch(0.54 0.16 264);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">T</span>
+          <div><div style="font-size:18px;font-weight:800;letter-spacing:-.4px">팀 작업 관리</div><div style="font-size:12px;color:#8a94a6">할 일 · 마일스톤 · 팀 타임라인</div></div>
+        </div>
+        <div style="display:flex;gap:4px;background:#f2f3f5;border-radius:12px;padding:4px;margin-bottom:20px">
+          <button onClick="{{ onAuthLoginTab }}" style="{{ loginTabStyle }}">로그인</button>
+          <button onClick="{{ onAuthSignupTab }}" style="{{ signupTabStyle }}">회원가입</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:13px">
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">닉네임</label>
+            <input value="{{ authForm.nickname }}" onChange="{{ setAuthNick }}" placeholder="닉네임" style="width:100%;height:44px;padding:0 14px;border:1px solid #e0e3e8;border-radius:11px;font-size:14px;background:#fff" />
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">비밀번호</label>
+            <input type="password" value="{{ authForm.password }}" onChange="{{ setAuthPw }}" placeholder="비밀번호" style="width:100%;height:44px;padding:0 14px;border:1px solid #e0e3e8;border-radius:11px;font-size:14px;background:#fff" />
+          </div>
+          <sc-if value="{{ isSignupTab }}" hint-placeholder-val="{{ false }}">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">팀 코드 <span style="color:#9aa0aa;font-weight:400">(선택 · 비우면 무소속)</span></label>
+              <input value="{{ authForm.teamCode }}" onChange="{{ setAuthTeam }}" placeholder="예: PROD2026" style="width:100%;height:44px;padding:0 14px;border:1px solid #e0e3e8;border-radius:11px;font-size:14px;background:#fff;text-transform:uppercase" />
+            </div>
+          </sc-if>
+          <sc-if value="{{ hasAuthError }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:12.5px;color:oklch(0.55 0.19 25);background:oklch(0.96 0.03 25);border:1px solid oklch(0.9 0.05 25);padding:9px 12px;border-radius:10px">{{ authError }}</div>
+          </sc-if>
+          <sc-if value="{{ isLoginTab }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ onLogin }}" style="height:46px;border-radius:12px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:2px;box-shadow:0 4px 12px oklch(0.54 0.16 264/.35)" style-hover="background:oklch(0.48 0.16 264)">로그인</button>
+          </sc-if>
+          <sc-if value="{{ isSignupTab }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ onSignup }}" style="height:46px;border-radius:12px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;margin-top:2px;box-shadow:0 4px 12px oklch(0.54 0.16 264/.35)" style-hover="background:oklch(0.48 0.16 264)">회원가입</button>
+          </sc-if>
+        </div>
+        <div style="margin-top:18px;padding:12px 14px;background:#f8f9fb;border-radius:11px;font-size:11.5px;color:#8a94a6;line-height:1.6">체험 계정 — 닉네임 <b style="color:#4b5563">김하늘</b> · 비밀번호 <b style="color:#4b5563">1234</b> (팀 PROD2026)<br />팀 코드: PROD2026 · DESIGN01 · GROWTH22</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onBell }}" style="position:fixed;inset:0;background:rgba(16,24,40,.28);z-index:40;animation:omFade .18s ease"></div>
+    <div style="position:fixed;top:0;right:0;bottom:0;width:min(400px,92vw);background:#fff;z-index:41;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(16,24,40,.16);animation:omSlideUp .22s ease">
+      <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eef0f3">
+        <div style="font-size:16px;font-weight:700">알림</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button onClick="{{ onTestNotif }}" style="height:30px;padding:0 10px;border-radius:8px;border:1px solid #e0e3e8;background:#fff;font-size:12px;font-weight:600;color:#4b5563;cursor:pointer" style-hover="background:#f7f8fa">테스트 알림</button>
+          <button onClick="{{ onBell }}" style="width:30px;height:30px;border-radius:8px;border:none;background:#f2f3f5;font-size:15px;color:#6b7280;cursor:pointer">×</button>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:10px">
+        <sc-for list="{{ notifications }}" as="n" hint-placeholder-count="5">
+          <div onClick="{{ n.open }}" style="display:flex;gap:11px;padding:12px 12px;border-radius:12px;cursor:pointer;background:{{ n.rowBg }}" style-hover="background:#f4f6f9">
+            <span style="flex:none;width:8px;height:8px;border-radius:50%;background:{{ n.typeColor }};margin-top:6px"></span>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+                <span style="font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:{{ n.typeBg }};color:{{ n.typeColor }}">{{ n.typeLabel }}</span>
+                <span style="font-size:11px;color:#9aa0aa;margin-left:auto">{{ n.time }}</span>
+              </div>
+              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.taskTitle }}</div>
+              <div style="font-size:12px;color:#6b7280;margin-top:1px">{{ n.desc }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseModal }}" style="position:fixed;inset:0;background:rgba(16,24,40,.32);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;animation:omFade .18s ease">
+      <div onClick="{{ stop }}" style="width:100%;max-width:560px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(16,24,40,.28);animation:omPop .2s ease;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef0f3">
+          <div style="font-size:16px;font-weight:700">{{ modalTitle }}</div>
+          <button onClick="{{ onCloseModal }}" style="width:32px;height:32px;border-radius:9px;border:none;background:#f2f3f5;font-size:16px;color:#6b7280;cursor:pointer">×</button>
+        </div>
+        <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px;max-height:66vh;overflow-y:auto">
+          <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:11px;background:#f2f3f5;color:#6b7280;font-size:12.5px;font-weight:500;pointer-events:auto"><span style="flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:#e4e7ec;color:#8a94a6">읽기 전용</span>{{ roAssignee }}님이 편집을 제한한 업무예요. 내용만 확인할 수 있어요.</div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:16px;pointer-events:{{ modalPE }}">
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">제목</label>
+            <input value="{{ form.title }}" onChange="{{ setTitle }}" placeholder="업무 제목을 입력하세요" style="width:100%;height:42px;padding:0 13px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px;background:#fff" />
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">상세 내용</label>
+            <textarea value="{{ form.content }}" onChange="{{ setContent }}" placeholder="무엇을, 어떻게 진행할지 적어주세요" style="width:100%;min-height:84px;padding:11px 13px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px;resize:vertical;line-height:1.5;background:#fff"></textarea>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:180px">
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">담당자</label>
+              <select value="{{ form.assignee }}" onChange="{{ setAssignee }}" style="width:100%;height:42px;padding:0 11px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px;background:#fff;cursor:pointer">
+                <sc-for list="{{ memberNames }}" as="mm" hint-placeholder-count="5"><option value="{{ mm }}">{{ mm }}</option></sc-for>
+              </select>
+            </div>
+            <div style="flex:1;min-width:180px">
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">마감일</label>
+              <input type="date" value="{{ form.due }}" onChange="{{ setDue }}" style="width:100%;height:42px;padding:0 12px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px;background:#fff;cursor:pointer" />
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">우선순위</label>
+              <div style="display:flex;gap:6px">
+                <button onClick="{{ setPriHigh }}" style="{{ priStyle.high }}">높음</button>
+                <button onClick="{{ setPriMid }}" style="{{ priStyle.mid }}">보통</button>
+                <button onClick="{{ setPriLow }}" style="{{ priStyle.low }}">낮음</button>
+              </div>
+            </div>
+            <div style="flex:1;min-width:200px">
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">상태</label>
+              <div style="display:flex;gap:6px">
+                <button onClick="{{ setStPlan }}" style="{{ stStyle.plan }}">예정</button>
+                <button onClick="{{ setStProg }}" style="{{ stStyle.prog }}">진행중</button>
+                <button onClick="{{ setStDone }}" style="{{ stStyle.done }}">완료</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">태그 <span style="color:#9aa0aa;font-weight:400">(쉼표로 구분)</span></label>
+            <input value="{{ form.tags }}" onChange="{{ setTags }}" placeholder="예: 마케팅, 3분기" style="width:100%;height:42px;padding:0 13px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px;background:#fff" />
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">공개 범위</label>
+            <div style="display:flex;gap:6px">
+              <button onClick="{{ setPrivate }}" style="{{ pubStyle.priv }}">비공개 (나만)</button>
+              <button onClick="{{ setPublic }}" style="{{ pubStyle.pub }}">공개 (팀 공유)</button>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">편집 권한</label>
+            <div style="display:flex;gap:6px">
+              <button onClick="{{ setAllowEdit }}" style="{{ editStyle.allow }}">팀원 편집 허용</button>
+              <button onClick="{{ setDenyEdit }}" style="{{ editStyle.deny }}">나만 편집</button>
+            </div>
+            <div style="font-size:11.5px;color:#9aa0aa;margin-top:6px">{{ editHint }}</div>
+          </div>
+          <div style="border-top:1px solid #eef0f3;padding-top:14px">
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:9px">알림 받기</label>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer"><input type="checkbox" checked="{{ form.notify.deadline }}" onChange="{{ setNfDeadline }}" style="width:17px;height:17px;accent-color:oklch(0.54 0.16 264);cursor:pointer" />기간 임박 (마감 하루 전·당일)</label>
+              <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer"><input type="checkbox" checked="{{ form.notify.remind }}" onChange="{{ setNfRemind }}" style="width:17px;height:17px;accent-color:oklch(0.54 0.16 264);cursor:pointer" />리마인드 (예정 작업 사전 안내)</label>
+              <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer"><input type="checkbox" checked="{{ form.notify.update }}" onChange="{{ setNfUpdate }}" style="width:17px;height:17px;accent-color:oklch(0.54 0.16 264);cursor:pointer" />작업 업데이트 (상태 변경 시)</label>
+            </div>
+          </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid #eef0f3;background:#fafbfc">
+          <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onCloseModal }}" style="margin-left:auto;height:40px;padding:0 20px;border-radius:10px;border:1px solid #e0e3e8;background:#fff;color:#4b5563;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#f7f8fa">닫기</button></sc-if>
+          <sc-if value="{{ editable }}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{ isEdit }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onDelete }}" style="height:40px;padding:0 14px;border-radius:10px;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.19 25);font-size:13px;font-weight:600;cursor:pointer" style-hover="background:oklch(0.97 0.03 25)">삭제</button></sc-if>
+          <button onClick="{{ onCloseModal }}" style="margin-left:auto;height:40px;padding:0 16px;border-radius:10px;border:1px solid #e0e3e8;background:#fff;color:#4b5563;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#f7f8fa">취소</button>
+          <button onClick="{{ onSave }}" style="height:40px;padding:0 20px;border-radius:10px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px oklch(0.54 0.16 264/.3)" style-hover="background:oklch(0.48 0.16 264)">{{ saveLabel }}</button>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ profileMenuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseProfile }}" style="position:fixed;inset:0;z-index:44;animation:omFade .15s ease"></div>
+    <div style="position:fixed;top:60px;right:16px;width:230px;background:#fff;border-radius:14px;box-shadow:0 12px 36px rgba(16,24,40,.2);border:1px solid #eef0f3;z-index:45;overflow:hidden;animation:omPop .16s ease">
+      <div style="display:flex;align-items:center;gap:11px;padding:15px 16px;border-bottom:1px solid #f2f3f5">
+        <span style="flex:none;width:40px;height:40px;border-radius:50%;background:{{ meAvatarCss }};background-size:cover;background-position:center;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">{{ meAvatarText }}</span>
+        <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ meNick }}</div><div style="font-size:11.5px;color:#8a94a6">{{ meTeamLabel }}</div></div>
+      </div>
+      <div style="padding:6px">
+        <button onClick="{{ onOpenSettings }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:9px;font-size:13.5px;font-weight:500;color:#3a3f47;cursor:pointer;text-align:left" style-hover="background:#f4f6f9"><span style="font-size:14px">⚙</span>설정</button>
+        <button onClick="{{ onLogout }}" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:9px;font-size:13.5px;font-weight:500;color:oklch(0.55 0.19 25);cursor:pointer;text-align:left" style-hover="background:oklch(0.97 0.03 25)"><span style="font-size:14px">⎋</span>로그아웃</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseSettings }}" style="position:fixed;inset:0;background:rgba(16,24,40,.32);z-index:52;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;animation:omFade .18s ease">
+      <div onClick="{{ stop }}" style="width:100%;max-width:480px;margin:auto;background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(16,24,40,.28);animation:omPop .2s ease;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef0f3">
+          <div style="font-size:16px;font-weight:700">설정</div>
+          <button onClick="{{ onCloseSettings }}" style="width:32px;height:32px;border-radius:9px;border:none;background:#f2f3f5;font-size:16px;color:#6b7280;cursor:pointer">×</button>
+        </div>
+        <div style="padding:22px;display:flex;flex-direction:column;gap:18px;max-height:70vh;overflow-y:auto">
+          <div style="display:flex;align-items:center;gap:16px">
+            <span style="flex:none;width:72px;height:72px;border-radius:50%;background:{{ setAvatarCss }};background-size:cover;background-position:center;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px">{{ setAvatarText }}</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600;color:#4b5563;margin-bottom:8px">프로필 사진 <span style="color:#9aa0aa;font-weight:400">(최대 4MB)</span></div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <label style="height:36px;padding:0 14px;border-radius:9px;border:1px solid #e0e3e8;background:#fff;font-size:12.5px;font-weight:600;color:#4b5563;cursor:pointer;display:inline-flex;align-items:center" style-hover="background:#f7f8fa">사진 업로드<input type="file" accept="image/*" onChange="{{ onAvatarPick }}" style="display:none" /></label>
+                <sc-if value="{{ setHasAvatar }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onRemoveAvatar }}" style="height:36px;padding:0 12px;border-radius:9px;border:1px solid #e0e3e8;background:#fff;font-size:12.5px;font-weight:600;color:#8a94a6;cursor:pointer" style-hover="background:#f7f8fa">삭제</button></sc-if>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">닉네임</label>
+            <div style="display:flex;gap:8px">
+              <input value="{{ settingsForm.nickname }}" onChange="{{ setSetNick }}" placeholder="닉네임" style="flex:1;height:42px;padding:0 13px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px" />
+              <button onClick="{{ onCheckNick }}" style="flex:none;height:42px;padding:0 15px;border-radius:10px;border:1px solid oklch(0.54 0.16 264);background:oklch(0.96 0.03 264);color:oklch(0.48 0.16 264);font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:oklch(0.93 0.04 264)">중복확인</button>
+            </div>
+            <sc-if value="{{ hasNickMsg }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;font-weight:600;margin-top:6px;color:{{ nickMsgColor }}">{{ nickMsg }}</div></sc-if>
+          </div>
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:6px">비밀번호 변경 <span style="color:#9aa0aa;font-weight:400">(변경 시에만 입력)</span></label>
+            <input type="password" value="{{ settingsForm.password }}" onChange="{{ setSetPw }}" placeholder="새 비밀번호 (4자 이상)" style="width:100%;height:42px;padding:0 13px;border:1px solid #e0e3e8;border-radius:10px;font-size:14px" />
+          </div>
+          <div style="border-top:1px solid #eef0f3;padding-top:16px">
+            <label style="display:block;font-size:12.5px;font-weight:600;color:#4b5563;margin-bottom:8px">팀</label>
+            <sc-if value="{{ hasTeam }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:11px;background:#f8f9fb">
+                <span style="flex:none;width:8px;height:8px;border-radius:50%;background:oklch(0.54 0.16 264)"></span>
+                <span style="flex:1;font-size:13px;font-weight:600">{{ settingsTeamLabel }}</span>
+                <button onClick="{{ onLeaveTeam }}" style="flex:none;height:34px;padding:0 13px;border-radius:9px;border:1px solid oklch(0.88 0.05 25);background:#fff;color:oklch(0.55 0.19 25);font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:oklch(0.97 0.03 25)">팀 나가기</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ needTeam }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12.5px;color:#9aa0aa;padding:11px 14px;border-radius:11px;background:#f8f9fb">소속된 팀이 없어요. 팀 메뉴에서 팀 코드로 참여할 수 있어요.</div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:16px 22px;border-top:1px solid #eef0f3;background:#fafbfc">
+          <button onClick="{{ onCloseSettings }}" style="margin-left:auto;height:40px;padding:0 16px;border-radius:10px;border:1px solid #e0e3e8;background:#fff;color:#4b5563;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#f7f8fa">취소</button>
+          <button onClick="{{ onSaveSettings }}" style="height:40px;padding:0 20px;border-radius:10px;border:none;background:oklch(0.54 0.16 264);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px oklch(0.54 0.16 264/.3)" style-hover="background:oklch(0.48 0.16 264)">저장</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div style="position:fixed;right:18px;bottom:18px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none">
+    <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="0">
+      <div style="display:flex;align-items:center;gap:12px;background:#1a1d21;color:#fff;padding:12px 14px 12px 16px;border-radius:11px;box-shadow:0 8px 24px rgba(16,24,40,.24);font-size:13px;font-weight:500;animation:omToast .2s ease;border-left:3px solid {{ t.color }};max-width:340px;pointer-events:auto"><span style="flex:none;width:7px;height:7px;border-radius:50%;background:{{ t.color }}"></span><span style="flex:1">{{ t.msg }}</span><sc-if value="{{ t.hasUndo }}" hint-placeholder-val="{{ false }}"><button onClick="{{ t.onUndo }}" style="flex:none;height:28px;padding:0 12px;border-radius:8px;border:none;background:rgba(255,255,255,.14);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer" style-hover="background:rgba(255,255,255,.26)">되돌리기</button></sc-if></div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;today&quot;,&quot;mytasks&quot;,&quot;timeline&quot;,&quot;milestone&quot;,&quot;calendar&quot;,&quot;team&quot;],&quot;default&quot;:&quot;today&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;동작&quot;},&quot;showCompleted&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;동작&quot;}}">
+class Component extends DCLogic {
+  members = [
+    {name:'김하늘', short:'하늘', color:'oklch(0.54 0.16 264)'},
+    {name:'김서연', short:'서연', color:'oklch(0.66 0.15 350)'},
+    {name:'박준호', short:'준호', color:'oklch(0.6 0.1 190)'},
+    {name:'이지훈', short:'지훈', color:'oklch(0.66 0.15 45)'},
+    {name:'최유나', short:'유나', color:'oklch(0.6 0.15 300)'},
+    {name:'정민석', short:'민석', color:'oklch(0.58 0.12 150)'},
+    {name:'한소희', short:'소희', color:'oklch(0.63 0.16 15)'},
+    {name:'강태오', short:'태오', color:'oklch(0.6 0.13 240)'},
+  ];
+  TODAY = new Date('2026-07-16T00:00:00');
+  VALID_TEAM = { 'PROD2026':'프로덕트팀', 'DESIGN01':'디자인팀', 'GROWTH22':'그로스팀' };
+  get ME(){ return (this.state && this.state.currentUser && this.state.currentUser.nickname) || '김하늘'; }
+  get inTeam(){ return !!(this.state && this.state.currentUser && this.state.currentUser.teamCode); }
+  get teamCode(){ return (this.state && this.state.currentUser && this.state.currentUser.teamCode) || null; }
+  teamLabel(code){ return this.VALID_TEAM[code] || code || '무소속'; }
+
+  state = {
+    view: this.props.defaultView || 'today',
+    myFilter: '전체',
+    currentUser: null,
+    authTab: 'login',
+    authForm: { nickname:'', password:'', teamCode:'' },
+    authError: '',
+    profileMenuOpen: false,
+    settingsOpen: false,
+    settingsForm: { nickname:'', password:'', avatar:null },
+    nickStatus: null,
+    teamJoin: '',
+    teamJoinError: '',
+    notifOpen: false,
+    modalOpen: false,
+    isEdit: false,
+    readOnly: false,
+    isMobile: false,
+    installOpen: true,
+    calY: 2026, calM: 6,
+    notifPermission: (typeof Notification !== 'undefined' ? Notification.permission : 'default'),
+    toasts: [],
+    form: this.blankForm(),
+    tasks: [
+      {id:'t1', title:'3분기 마케팅 캠페인 기획안', content:'채널별 예산 배분과 핵심 메시지 확정', assignee:'김하늘', due:'2026-07-16', priority:'높음', status:'진행중', tags:['마케팅','3분기'], isPublic:true, team:'PROD2026', notify:{update:true,remind:true,deadline:true}},
+      {id:'t2', title:'신규 온보딩 플로우 리뷰', content:'가입 후 첫 3단계 이탈률 개선안 검토', assignee:'김하늘', due:'2026-07-16', priority:'보통', status:'예정', tags:['제품'], isPublic:false, team:'PROD2026', notify:{update:false,remind:true,deadline:true}},
+      {id:'t3', title:'주간 팀 회의 자료 준비', content:'지난주 지표 요약 + 이번주 우선순위', assignee:'김하늘', due:'2026-07-16', priority:'보통', status:'완료', tags:['회의'], isPublic:false, team:'PROD2026', notify:{update:false,remind:false,deadline:false}},
+      {id:'t4', title:'API 응답 속도 최적화', content:'상세 조회 엔드포인트 캐싱 적용', assignee:'이지훈', due:'2026-07-15', priority:'높음', status:'진행중', tags:['개발'], isPublic:true, allowEdit:false, team:'PROD2026', notify:{update:true,remind:true,deadline:true}},
+      {id:'t5', title:'월간 정산 보고서 제출', content:'6월 매출·비용 정산 및 재무팀 공유', assignee:'김하늘', due:'2026-07-17', priority:'높음', status:'예정', tags:['재무'], isPublic:true, team:'PROD2026', notify:{update:true,remind:true,deadline:true}},
+      {id:'t6', title:'디자인 시스템 컴포넌트 정리', content:'버튼·인풋 토큰 통합 및 문서화', assignee:'최유나', due:'2026-07-17', priority:'보통', status:'진행중', tags:['디자인'], isPublic:true, team:'PROD2026', notify:{update:true,remind:false,deadline:true}},
+      {id:'t7', title:'고객 인터뷰 5건 진행', content:'파워유저 대상 심층 인터뷰 스크립트', assignee:'김하늘', due:'2026-07-18', priority:'보통', status:'예정', tags:['리서치'], isPublic:false, team:'PROD2026', notify:{update:false,remind:true,deadline:true}},
+      {id:'t8', title:'앱 스토어 심사 대응', content:'거절 사유 수정 후 재제출', assignee:'김하늘', due:'2026-07-19', priority:'높음', status:'진행중', tags:['제품','출시'], isPublic:true, team:'PROD2026', notify:{update:true,remind:true,deadline:true}},
+      {id:'t9', title:'채용 공고 게시', content:'프론트엔드 시니어 포지션 오픈', assignee:'한소희', due:'2026-07-20', priority:'낮음', status:'예정', tags:['인사'], isPublic:true, team:'PROD2026', notify:{update:false,remind:false,deadline:false}},
+      {id:'t10', title:'보안 점검 정기 감사', content:'접근 권한 및 로그 검토', assignee:'정민석', due:'2026-07-22', priority:'높음', status:'예정', tags:['보안'], isPublic:true, allowEdit:false, team:'PROD2026', notify:{update:true,remind:false,deadline:true}},
+      {id:'t11', title:'브랜드 리뉴얼 킥오프', content:'로고·컬러 방향성 워크숍', assignee:'김서연', due:'2026-07-25', priority:'보통', status:'예정', tags:['브랜드'], isPublic:true, team:'PROD2026', notify:{update:false,remind:false,deadline:false}},
+      {id:'t12', title:'데이터 파이프라인 마이그레이션', content:'신규 웨어하우스로 ETL 이전', assignee:'박준호', due:'2026-07-30', priority:'높음', status:'예정', tags:['개발'], isPublic:true, team:'PROD2026', notify:{update:true,remind:false,deadline:true}},
+      {id:'t13', title:'연간 로드맵 초안', content:'하반기 핵심 목표 3가지 정리', assignee:'김하늘', due:'2026-08-05', priority:'낮음', status:'예정', tags:['전략'], isPublic:false, team:'PROD2026', notify:{update:false,remind:true,deadline:false}},
+    ],
+    notifications: [
+      {id:'n1', type:'임박', taskTitle:'월간 정산 보고서 제출', desc:'내일(7/17) 마감 예정이에요.', time:'방금', read:false},
+      {id:'n2', type:'임박', taskTitle:'API 응답 속도 최적화', desc:'마감이 하루 지났어요.', time:'1시간 전', read:false},
+      {id:'n3', type:'업데이트', taskTitle:'디자인 시스템 컴포넌트 정리', desc:'최유나님이 진행중으로 변경했어요.', time:'3시간 전', read:false},
+      {id:'n4', type:'리마인드', taskTitle:'고객 인터뷰 5건 진행', desc:'모레(7/18) 예정된 작업이에요.', time:'오늘 09:00', read:true},
+      {id:'n5', type:'업데이트', taskTitle:'앱 스토어 심사 대응', desc:'상태가 진행중으로 변경됐어요.', time:'어제', read:true},
+    ],
+  };
+
+  milestoneDefs = [
+    {id:'m1', title:'제품 v2.0 출시', due:'2026-07-31', color:'oklch(0.54 0.16 264)', taskIds:['t2','t8','t6','t4']},
+    {id:'m2', title:'3분기 마케팅 런칭', due:'2026-08-15', color:'oklch(0.66 0.15 350)', taskIds:['t1','t11']},
+    {id:'m3', title:'하반기 채용·인프라', due:'2026-09-01', color:'oklch(0.6 0.13 240)', taskIds:['t9','t12','t10']},
+  ];
+
+  blankForm(){ return {id:null,title:'',content:'',assignee:this.ME,due:'2026-07-16',priority:'보통',status:'예정',tags:'',isPublic:false,allowEdit:true,notify:{update:true,remind:true,deadline:true}}; }
+
+  componentDidMount(){
+    this._onResize = () => { const m = window.innerWidth < 860; if(m !== this.state.isMobile) this.setState({isMobile:m}); };
+    this._onResize(); window.addEventListener('resize', this._onResize);
+    window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); this._deferred = e; });
+    this.seedUsers();
+    let sess=null; try{ sess=localStorage.getItem('twm_session'); }catch(e){}
+    if(sess){ const u=this.loadUsers()||[]; const found=u.find(x=>x.nickname===sess); if(found) this.setState({currentUser:{...found}}); }
+    if(this.state.notifPermission === 'granted') this.checkDeadlines();
+  }
+  componentWillUnmount(){ if(this._onResize) window.removeEventListener('resize', this._onResize); }
+
+  diffDays(due){ return Math.round((new Date(due+'T00:00:00') - this.TODAY)/86400000); }
+  fmtDate(due){ const d=new Date(due+'T00:00:00'); return `${d.getMonth()+1}월 ${d.getDate()}일`; }
+  wname(d){ return ['일','월','화','수','목','금','토'][d]; }
+  member(name){ return this.members.find(m=>m.name===name) || {short:(name||'').slice(0,2), color:this.hashColor(name)}; }
+  hashColor(name){ let h=0; for(let i=0;i<(name||'').length;i++) h=(h*31+name.charCodeAt(i))%360; return `oklch(0.62 0.14 ${h})`; }
+
+  // ---- users / auth ----
+  loadUsers(){ try{ return JSON.parse(localStorage.getItem('twm_users')||'null'); }catch(e){ return null; } }
+  saveUsers(u){ try{ localStorage.setItem('twm_users', JSON.stringify(u)); }catch(e){} }
+  seedUsers(){ let u=this.loadUsers(); if(!u){ u=this.members.map(m=>({nickname:m.name,password:'1234',teamCode:'PROD2026',avatar:null})); this.saveUsers(u); } return u; }
+  setSession(nick){ try{ localStorage.setItem('twm_session', nick); }catch(e){} }
+
+  setAuthTab = (t) => () => this.setState({authTab:t, authError:''});
+  setAuthField = (k) => (e) => { const v=e.target.value; this.setState(s=>({authForm:{...s.authForm,[k]:v}, authError:''})); };
+  doLogin = () => { const f=this.state.authForm; if(!f.nickname.trim()||!f.password){ this.setState({authError:'닉네임과 비밀번호를 입력하세요.'}); return; } const u=this.loadUsers()||[]; const found=u.find(x=>x.nickname===f.nickname.trim() && x.password===f.password); if(!found){ this.setState({authError:'닉네임 또는 비밀번호가 올바르지 않아요.'}); return; } const cu={...found}; this.setSession(cu.nickname); this.setState({currentUser:cu, authForm:{nickname:'',password:'',teamCode:''}, authError:''}, ()=>{ this.toast(`${cu.nickname}님 환영합니다`, 'oklch(0.55 0.12 150)'); if(this.state.notifPermission==='granted') this.checkDeadlines(); }); };
+  doSignup = () => { const f=this.state.authForm; const nick=f.nickname.trim(), tc=f.teamCode.trim().toUpperCase(); if(!nick){ this.setState({authError:'닉네임을 입력하세요.'}); return; } if((f.password||'').length<4){ this.setState({authError:'비밀번호는 4자 이상이어야 해요.'}); return; } let u=this.loadUsers()||[]; if(u.some(x=>x.nickname===nick)){ this.setState({authError:'이미 사용 중인 닉네임이에요.'}); return; } if(tc && !this.VALID_TEAM[tc]){ this.setState({authError:'존재하지 않는 팀 코드예요. (비워두면 무소속으로 시작)'}); return; } const cu={nickname:nick,password:f.password,teamCode:tc||null,avatar:null}; u.push(cu); this.saveUsers(u); this.setSession(nick); this.setState({currentUser:{...cu}, authForm:{nickname:'',password:'',teamCode:''}, authError:''}, ()=>this.toast('회원가입 완료! 환영합니다', 'oklch(0.55 0.12 150)')); };
+  logout = () => { try{ localStorage.removeItem('twm_session'); }catch(e){} this.setState({currentUser:null, profileMenuOpen:false, settingsOpen:false, view:'today', notifOpen:false, modalOpen:false}); };
+
+  // ---- profile / settings ----
+  toggleProfile = () => this.setState(s=>({profileMenuOpen:!s.profileMenuOpen}));
+  closeProfile = () => this.setState({profileMenuOpen:false});
+  openSettings = () => { const cu=this.state.currentUser; this.setState({settingsOpen:true, profileMenuOpen:false, settingsForm:{nickname:cu.nickname, password:'', avatar:cu.avatar||null}, nickStatus:null}); };
+  closeSettings = () => this.setState({settingsOpen:false});
+  setSetNick = (e) => { const v=e.target.value; this.setState(s=>({settingsForm:{...s.settingsForm,nickname:v}, nickStatus:null})); };
+  setSetPw = (e) => { const v=e.target.value; this.setState(s=>({settingsForm:{...s.settingsForm,password:v}})); };
+  checkNick = () => { const nick=this.state.settingsForm.nickname.trim(); if(!nick){ this.setState({nickStatus:'empty'}); return; } if(nick===this.state.currentUser.nickname){ this.setState({nickStatus:'same'}); return; } const u=this.loadUsers()||[]; this.setState({nickStatus: u.some(x=>x.nickname===nick)?'dup':'ok'}); };
+  onAvatar = (e) => { const file=e.target.files&&e.target.files[0]; if(!file) return; if(file.size>4*1024*1024){ this.toast('이미지는 최대 4MB까지 가능해요','oklch(0.6 0.19 25)'); e.target.value=''; return; } const r=new FileReader(); r.onload=()=>this.setState(s=>({settingsForm:{...s.settingsForm,avatar:r.result}})); r.readAsDataURL(file); };
+  removeAvatar = () => this.setState(s=>({settingsForm:{...s.settingsForm,avatar:null}}));
+  saveSettings = () => { const cu=this.state.currentUser, f=this.state.settingsForm; const nick=f.nickname.trim(); if(!nick){ this.toast('닉네임을 입력하세요','oklch(0.6 0.19 25)'); return; } if(nick!==cu.nickname){ const u0=this.loadUsers()||[]; if(u0.some(x=>x.nickname===nick)){ this.toast('이미 사용 중인 닉네임이에요','oklch(0.6 0.19 25)'); return; } } if(f.password && f.password.length<4){ this.toast('비밀번호는 4자 이상이어야 해요','oklch(0.6 0.19 25)'); return; } const oldNick=cu.nickname; const nu={...cu, nickname:nick, avatar:f.avatar}; if(f.password) nu.password=f.password; let u=this.loadUsers()||[]; const i=u.findIndex(x=>x.nickname===oldNick); if(i>=0) u[i]={nickname:nu.nickname,password:nu.password,teamCode:nu.teamCode,avatar:nu.avatar}; this.saveUsers(u); this.setSession(nu.nickname); this.setState(s=>({currentUser:nu, settingsOpen:false, tasks: oldNick!==nick ? s.tasks.map(t=>t.assignee===oldNick?{...t,assignee:nick}:t) : s.tasks}), ()=>this.toast('프로필이 저장됐어요','oklch(0.55 0.13 264)')); };
+  leaveTeam = () => { const cu=this.state.currentUser; const nu={...cu, teamCode:null}; let u=this.loadUsers()||[]; const i=u.findIndex(x=>x.nickname===cu.nickname); if(i>=0){ u[i].teamCode=null; this.saveUsers(u); } this.setState({currentUser:nu, settingsOpen:false, view:'today'}, ()=>this.toast('팀에서 나왔어요','oklch(0.6 0.15 45)')); };
+
+  // ---- team join ----
+  setTeamJoin = (e) => { const v=e.target.value; this.setState({teamJoin:v, teamJoinError:''}); };
+  joinTeam = () => { const code=this.state.teamJoin.trim().toUpperCase(); if(!code){ this.setState({teamJoinError:'팀 코드를 입력하세요.'}); return; } if(!this.VALID_TEAM[code]){ this.setState({teamJoinError:'존재하지 않는 팀 코드예요.'}); return; } const cu={...this.state.currentUser, teamCode:code}; let u=this.loadUsers()||[]; const i=u.findIndex(x=>x.nickname===cu.nickname); if(i>=0){ u[i].teamCode=code; this.saveUsers(u); } this.setState({currentUser:cu, teamJoin:''}, ()=>this.toast(`${this.teamLabel(code)}에 참여했어요`,'oklch(0.55 0.12 150)')); };
+
+  // ---- toasts ----
+  toast(msg, color, undoId){ const id='ts'+Date.now()+Math.random(); this.setState(s=>({toasts:[...s.toasts,{id,msg,color:color||'oklch(0.6 0.15 264)',undoId:undoId||null}]})); setTimeout(()=>this.setState(s=>({toasts:s.toasts.filter(t=>t.id!==id)})), undoId?5000:2800); }
+  dismissToast(id){ this.setState(s=>({toasts:s.toasts.filter(t=>t.id!==id)})); }
+
+  // ---- navigation ----
+  go = (v) => () => this.setState({view:v, notifOpen:false});
+
+  // ---- task ops ----
+  toggleDone = (id) => { this.setState(s=>{ const tasks=s.tasks.map(t=>{ if(t.id!==id) return t; if(t.status==='완료') return {...t, status:t.prevStatus||'진행중'}; return {...t, status:'완료', prevStatus:t.status}; }); return {tasks}; }, ()=>{ const t=this.state.tasks.find(x=>x.id===id); if(t){ const done=t.status==='완료'; this.toast(done?`'${t.title}' 완료 처리했어요`:`'${t.title}' 다시 ${t.status}(으)로`, done?'oklch(0.55 0.12 150)':'oklch(0.6 0.13 264)', done?id:null); if(t.notify.update&&t.assignee===this.ME) this.pushNotif('업데이트', t.title, `상태가 ${t.status}(으)로 변경됐어요.`); } }); };
+  canEdit(t){ return t.assignee===this.ME || t.allowEdit!==false; }
+
+  pushNotif(type, title, desc){ this.setState(s=>({notifications:[{id:'n'+Date.now(),type,taskTitle:title,desc,time:'방금',read:false}, ...s.notifications]})); }
+
+  openEdit = (id) => { const t=this.state.tasks.find(x=>x.id===id); if(!t) return; const ro=!this.canEdit(t); this.setState({modalOpen:true,isEdit:true,readOnly:ro,notifOpen:false,form:{...t,tags:(t.tags||[]).join(', '),allowEdit:t.allowEdit!==false,notify:{...t.notify}}}); };
+  openCreate = () => this.setState({modalOpen:true,isEdit:false,readOnly:false,form:this.blankForm()});
+  closeModal = () => this.setState({modalOpen:false});
+  stop = (e) => { if(e&&e.stopPropagation) e.stopPropagation(); };
+
+  setField = (k) => (e) => { const v=e.target.value; this.setState(s=>({form:{...s.form,[k]:v}})); };
+  setPri = (v) => () => this.setState(s=>({form:{...s.form,priority:v}}));
+  setSt = (v) => () => this.setState(s=>({form:{...s.form,status:v}}));
+  setPub = (v) => () => this.setState(s=>({form:{...s.form,isPublic:v}}));
+  setEdit = (v) => () => this.setState(s=>({form:{...s.form,allowEdit:v}}));
+  setNf = (k) => (e) => { const v=e.target.checked; this.setState(s=>({form:{...s.form,notify:{...s.form.notify,[k]:v}}})); };
+
+  saveTask = () => {
+    const f=this.state.form;
+    if(!f.title.trim()){ this.toast('제목을 입력해주세요', 'oklch(0.6 0.19 25)'); return; }
+    const tags=(f.tags||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const base={title:f.title.trim(),content:f.content.trim(),assignee:f.assignee,due:f.due,priority:f.priority,status:f.status,tags,isPublic:f.isPublic,allowEdit:f.allowEdit!==false,team:this.teamCode,notify:{...f.notify}};
+    if(this.state.isEdit){
+      this.setState(s=>({tasks:s.tasks.map(t=>t.id===f.id?{...t,...base}:t),modalOpen:false}));
+      this.toast('업무가 수정됐어요', 'oklch(0.55 0.13 264)');
+    } else {
+      const id='t'+Date.now();
+      this.setState(s=>({tasks:[...s.tasks,{id,...base}],modalOpen:false}));
+      this.toast('새 업무가 등록됐어요', 'oklch(0.55 0.12 150)');
+    }
+    const d=this.diffDays(f.due);
+    if(f.notify.deadline && d>=0 && d<=1) this.fireNotif(f.title, d===0?'오늘 마감이에요.':'내일 마감이에요.');
+  };
+  deleteTask = () => { const id=this.state.form.id; this.setState(s=>({tasks:s.tasks.filter(t=>t.id!==id),modalOpen:false})); this.toast('업무가 삭제됐어요', 'oklch(0.6 0.19 25)'); };
+
+  // ---- notifications panel ----
+  toggleNotif = () => { const opening=!this.state.notifOpen; this.setState(s=>({notifOpen:opening, notifications: opening? s.notifications.map(n=>({...n,read:true})) : s.notifications})); };
+  openFromNotif = (title) => () => { const t=this.state.tasks.find(x=>x.title===title); if(t) this.openEdit(t.id); else this.setState({notifOpen:false}); };
+
+  // ---- browser notifications ----
+  fireNotif(title, body){ if(typeof Notification!=='undefined' && Notification.permission==='granted'){ try{ new Notification(`업무 알림 · ${title}`, {body, tag:title}); }catch(e){} } }
+  enableNotif = () => {
+    if(typeof Notification==='undefined'){ this.toast('이 브라우저는 알림을 지원하지 않아요', 'oklch(0.6 0.19 25)'); return; }
+    Notification.requestPermission().then(p=>{ this.setState({notifPermission:p}); if(p==='granted'){ this.toast('브라우저 알림을 켰어요', 'oklch(0.55 0.12 150)'); this.fireNotif('팀 작업 관리', '마감 임박·업데이트를 알려드릴게요.'); this.checkDeadlines(); } else { this.toast('알림 권한이 거부됐어요', 'oklch(0.6 0.19 25)'); } });
+  };
+  testNotif = () => {
+    if(typeof Notification==='undefined'){ this.toast('알림을 지원하지 않는 브라우저예요','oklch(0.6 0.19 25)'); return; }
+    if(Notification.permission==='granted'){ this.fireNotif('월간 정산 보고서 제출', '내일(7/17) 마감 예정이에요. (테스트)'); this.toast('테스트 알림을 보냈어요', 'oklch(0.55 0.13 264)'); }
+    else this.enableNotif();
+  };
+  checkDeadlines(){ const soon=this.state.tasks.filter(t=>t.assignee===this.ME && t.status!=='완료' && t.notify.deadline && this.diffDays(t.due)>=0 && this.diffDays(t.due)<=1); if(soon.length) this.fireNotif(`${soon.length}건 마감 임박`, soon.map(t=>t.title).join(', ')); }
+
+  // ---- install ----
+  install = () => { if(this._deferred){ this._deferred.prompt(); this._deferred.userChoice.finally(()=>this.setState({installOpen:false})); } else { this.toast('브라우저 메뉴 → "홈 화면에 추가"로 설치할 수 있어요', 'oklch(0.55 0.13 264)'); this.setState({installOpen:false}); } };
+  dismissInstall = () => this.setState({installOpen:false});
+
+  // ---- calendar nav ----
+  calShift = (d) => () => { let y=this.state.calY, m=this.state.calM+d; if(m<0){m=11;y--;} if(m>11){m=0;y++;} this.setState({calY:y,calM:m}); };
+  calToday = () => this.setState({calY:2026,calM:6});
+  setMyFilter = (f) => () => this.setState({myFilter:f});
+
+  // ---- decorate ----
+  decorate(t){
+    const diff=this.diffDays(t.due), done=t.status==='완료';
+    const priColor = t.priority==='높음'?'oklch(0.62 0.19 25)':t.priority==='보통'?'oklch(0.72 0.15 65)':'oklch(0.68 0.03 260)';
+    let dueLabel,dueBg,dueColor;
+    if(done){ dueLabel=this.fmtDate(t.due); dueBg='#f2f3f5'; dueColor='#8a94a6'; }
+    else if(diff<0){ dueLabel = diff===-1?'어제 마감':`${-diff}일 지남`; dueBg='oklch(0.95 0.04 25)'; dueColor='oklch(0.5 0.19 25)'; }
+    else if(diff===0){ dueLabel='오늘 마감'; dueBg='oklch(0.95 0.05 264)'; dueColor='oklch(0.46 0.17 264)'; }
+    else if(diff===1){ dueLabel='내일 마감'; dueBg='oklch(0.96 0.06 75)'; dueColor='oklch(0.5 0.14 65)'; }
+    else if(diff<=6){ dueLabel=`${diff}일 뒤`; dueBg='#eef0f3'; dueColor='#5b6472'; }
+    else { dueLabel=this.fmtDate(t.due); dueBg='#eef0f3'; dueColor='#5b6472'; }
+    const st={'예정':['#eef0f3','#5b6472'],'진행중':['oklch(0.95 0.04 264)','oklch(0.46 0.16 264)'],'완료':['oklch(0.95 0.05 150)','oklch(0.48 0.12 150)']}[t.status];
+    const editable=this.canEdit(t);
+    let checkBg='#fff',checkBorder='#cbd0d8',checkMarkColor='transparent',checkHover='',checkCursor='pointer',checkTitle='완료 처리';
+    if(!done && t.status==='진행중'){ checkBorder='oklch(0.6 0.14 264)'; }
+    if(done){ checkBg='oklch(0.58 0.13 150)'; checkBorder='oklch(0.58 0.13 150)'; checkMarkColor='#fff'; checkTitle='완료 취소'; checkHover='transform:scale(1.08)'; }
+    if(!done && editable){ checkHover='border-color:oklch(0.58 0.13 150);background:oklch(0.96 0.04 150);color:oklch(0.55 0.12 150)'; }
+    if(!editable){ checkCursor='default'; checkTitle='편집 권한 없음'; if(!done){ checkBg='#f7f8fa'; checkBorder='#e4e7ec'; checkHover=''; } }
+    const m=this.member(t.assignee);
+    return {...t,
+      priorityColor:priColor, dueLabel,dueBg,dueColor,
+      statusBg:st[0], statusColor:st[1], statusLabel:t.status,
+      checkBg,checkBorder,checkMarkColor,checkHover,checkCursor,checkTitle,
+      locked: !editable,
+      titleDeco: done?'line-through':'none', cardOpacity: done?0.64:1, hasContent:!!t.content,
+      pubLabel: t.isPublic?'공개':'비공개', pubBg: t.isPublic?'oklch(0.96 0.03 264)':'#f2f3f5', pubColor: t.isPublic?'oklch(0.5 0.14 264)':'#9aa0aa',
+      avatarColor:m.color, avatarInitial:m.short,
+      open:()=>this.openEdit(t.id),
+      toggleStatus:(e)=>{ if(e&&e.stopPropagation)e.stopPropagation(); if(!editable){ this.toast('다른 담당자가 편집을 제한한 업무예요','oklch(0.6 0.19 25)'); return; } this.toggleDone(t.id); },
+    };
+  }
+
+  navStyle(active){ return `display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;border-radius:10px;font-size:14px;font-weight:${active?700:500};cursor:pointer;transition:all .12s;background:${active?'oklch(0.96 0.03 264)':'transparent'};color:${active?'oklch(0.44 0.17 264)':'#5b6472'}`; }
+  mnavStyle(active){ return `flex:1 0 auto;min-width:62px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border:none;background:transparent;font-size:11px;font-weight:${active?700:500};color:${active?'oklch(0.46 0.17 264)':'#9aa0aa'};cursor:pointer`; }
+  seg(active,color){ const c=color||'oklch(0.54 0.16 264)'; return `flex:1;padding:9px 0;font-size:12.5px;font-weight:600;border-radius:9px;cursor:pointer;transition:all .12s;border:1px solid ${active?'transparent':'#e0e3e8'};background:${active?c:'#fff'};color:${active?'#fff':'#5b6472'}`; }
+  filterStyle(active){ return `padding:7px 13px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .12s;border:1px solid ${active?'transparent':'#e0e3e8'};background:${active?'#1a1d21':'#fff'};color:${active?'#fff':'#5b6472'}`; }
+  authTabStyle(active){ return `flex:1;padding:11px 0;font-size:13.5px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:all .12s;background:${active?'#fff':'transparent'};color:${active?'oklch(0.44 0.17 264)':'#8a94a6'};box-shadow:${active?'0 1px 3px rgba(16,24,40,.12)':'none'}`; }
+  navIcon(key,color){ const e=React.createElement; const sw=1.9; const p=(d)=>e('path',{d,fill:'none',stroke:color,strokeWidth:sw,strokeLinecap:'round',strokeLinejoin:'round'}); const c=(cx,cy,r,fill)=>e('circle',{cx,cy,r,fill:fill||'none',stroke:color,strokeWidth:sw}); const svg=(...ch)=>e('svg',{width:25,height:25,viewBox:'0 0 24 24'},...ch);
+    switch(key){
+      case 'today': return svg(c(12,12,8.5),p('M8.4 12.4l2.5 2.5 4.6-5.1'));
+      case 'mytasks': return svg(p('M9 6h11'),p('M9 12h11'),p('M9 18h11'),c(4,6,1.5,color),c(4,12,1.5,color),c(4,18,1.5,color));
+      case 'timeline': return svg(p('M6 3v18'),c(6,8,2.4,'#fff'),c(6,16,2.4,'#fff'),p('M11 8h8'),p('M11 16h6'));
+      case 'milestone': return svg(p('M6 21V4'),p('M6 4.5h11l-2.6 3.4L17 11.5H6'));
+      case 'calendar': return svg(e('rect',{x:3.5,y:5,width:17,height:15.5,rx:3,fill:'none',stroke:color,strokeWidth:sw}),p('M3.5 10h17'),p('M8 3v4'),p('M16 3v4'));
+      case 'team': return svg(c(8.5,8,3),p('M3 20a5.5 5.5 0 0 1 11 0'),c(17,9,2.3),p('M16.2 14.6c2.4.1 4.3 2 4.3 4.4'));
+      default: return svg();
+    }
+  }
+
+  renderVals(){
+    const S=this.state, showDone = this.props.showCompleted !== false;
+    const dec=(t)=>this.decorate(t);
+    const view=S.view;
+    const titles={today:['오늘',`${this.TODAY.getMonth()+1}월 ${this.TODAY.getDate()}일 ${this.wname(this.TODAY.getDay())}요일 · 마감 임박 업무를 먼저 확인하세요`],mytasks:['내 할 일','내가 담당한 모든 업무'],timeline:['타임라인','마감일 순서로 보는 내 업무와 공개 업무'],milestone:['마일스톤','주요 목표별 진행 상황'],calendar:['캘린더','월간 일정 한눈에 보기'],team:['팀 대시보드','팀이 공개한 업무 실시간 현황']};
+    const nav=[['today','오늘'],['mytasks','내 할 일'],['timeline','타임라인'],['milestone','마일스톤'],['calendar','캘린더'],['team','팀']];
+    const overdueTodayCount=S.tasks.filter(t=>t.assignee===this.ME&&t.status!=='완료'&&this.diffDays(t.due)<=0).length;
+    const unread=S.notifications.filter(n=>!n.read).length;
+
+    const navItems=nav.map(([k,label])=>{ const active=view===k; const badge = k==='today'?overdueTodayCount:0; return {key:k,label,onClick:this.go(k),style:this.navStyle(active),dot:active?'oklch(0.54 0.16 264)':'transparent',mColor:active?'oklch(0.46 0.17 264)':'#8a94a6',mWeight:active?700:500,mPillBg:active?'oklch(0.95 0.04 264)':'transparent',icon:this.navIcon(k, active?'oklch(0.5 0.17 264)':'#98a0ac'),showBadge:badge>0,badge:String(badge),badgeBg:'oklch(0.6 0.19 25)',badgeColor:'#fff'}; });
+
+    // today
+    const mine=S.tasks.filter(t=>t.assignee===this.ME);
+    const myActive=mine.filter(t=>t.status!=='완료');
+    const overdue=myActive.filter(t=>this.diffDays(t.due)<0).sort((a,b)=>this.diffDays(a.due)-this.diffDays(b.due)).map(dec);
+    const todayTasks=myActive.filter(t=>this.diffDays(t.due)===0).map(dec);
+    const upcoming=myActive.filter(t=>this.diffDays(t.due)>0).sort((a,b)=>this.diffDays(a.due)-this.diffDays(b.due)).map(dec);
+    const stats={remaining:myActive.length,due:overdueTodayCount,done:mine.filter(t=>t.status==='완료').length};
+
+    // my tasks
+    let myList=[...mine];
+    if(S.myFilter!=='전체') myList=myList.filter(t=>t.status===S.myFilter);
+    if(!showDone && S.myFilter==='전체') myList=myList.filter(t=>t.status!=='완료');
+    myList.sort((a,b)=>(a.status==='완료')-(b.status==='완료')||this.diffDays(a.due)-this.diffDays(b.due));
+    const myTasks=myList.map(dec);
+    const myFilters=['전체','예정','진행중','완료'].map(f=>({label:f,onClick:this.setMyFilter(f),style:this.filterStyle(S.myFilter===f)}));
+
+    // timeline
+    const rel=S.tasks.filter(t=>t.assignee===this.ME||(this.inTeam&&t.isPublic&&t.team===this.teamCode));
+    const byDate={};
+    rel.forEach(t=>{ (byDate[t.due]=byDate[t.due]||[]).push(t); });
+    const timeline=Object.keys(byDate).sort().map(d=>{ const diff=this.diffDays(d); const dd=new Date(d+'T00:00:00'); let dot='#c2c8d2',lc='#1a1d21',badge='',bBg='',bC='',showBadge=false; if(diff<0){dot='oklch(0.62 0.19 25)';lc='oklch(0.5 0.19 25)';badge='지남';bBg='oklch(0.95 0.04 25)';bC='oklch(0.5 0.19 25)';showBadge=true;} else if(diff===0){dot='oklch(0.54 0.16 264)';lc='oklch(0.44 0.17 264)';badge='오늘';bBg='oklch(0.95 0.05 264)';bC='oklch(0.46 0.17 264)';showBadge=true;} else if(diff===1){dot='oklch(0.72 0.15 65)';lc='oklch(0.5 0.14 65)';badge='내일';bBg='oklch(0.96 0.06 75)';bC='oklch(0.5 0.14 65)';showBadge=true;} return {due:d,dateLabel:this.fmtDate(d),weekday:this.wname(dd.getDay())+'요일',labelColor:lc,dot,showBadge,badge,badgeBg:bBg,badgeColor:bC,tasks:byDate[d].sort((a,b)=>(a.status==='완료')-(b.status==='완료')).map(dec)}; });
+
+    // milestones
+    const milestones=this.milestoneDefs.map(m=>{ const ts=m.taskIds.map(id=>S.tasks.find(t=>t.id===id)).filter(Boolean); const done=ts.filter(t=>t.status==='완료').length; const pct=ts.length?Math.round(done/ts.length*100):0; const dl=this.diffDays(m.due); return {...m,dueLabel:this.fmtDate(m.due),remainLabel: dl<0?'기한 지남':dl===0?'오늘까지':`${dl}일 남음`,total:ts.length,doneCount:done,percent:pct,tasks:ts.map(dec)}; });
+
+    // calendar
+    const y=S.calY,mo=S.calM;
+    const first=new Date(y,mo,1), start=first.getDay(), dim=new Date(y,mo+1,0).getDate(), prevDim=new Date(y,mo,0).getDate();
+    const calRel=S.tasks.filter(t=>t.assignee===this.ME||(this.inTeam&&t.isPublic&&t.team===this.teamCode));
+    const pad=n=>String(n).padStart(2,'0');
+    const cells=[];
+    for(let i=start-1;i>=0;i--) cells.push({dayNum:prevDim-i,other:true});
+    for(let d=1;d<=dim;d++) cells.push({dayNum:d,other:false,dateStr:`${y}-${pad(mo+1)}-${pad(d)}`});
+    while(cells.length%7!==0) cells.push({dayNum:cells.length-start-dim+1,other:true});
+    const todayStr=`2026-07-16`;
+    const calCells=cells.map(c=>{ if(c.other) return {dayNum:c.dayNum,other:true,bg:'#fafbfc',borderColor:'#f0f1f4',numColor:'#c2c8d2',numWeight:500,chips:[],hasMore:false,moreCount:0}; const isToday=c.dateStr===todayStr; const dayTasks=calRel.filter(t=>t.due===c.dateStr); const chips=dayTasks.slice(0,3).map(t=>{ const d=dec(t); return {title:t.title,dot:d.priorityColor,bg:d.dueBg==='#eef0f3'?'#f4f6f9':d.dueBg,color:'#4b5563',open:()=>this.openEdit(t.id)}; }); return {dayNum:c.dayNum,other:false,bg:isToday?'oklch(0.97 0.03 264)':'#fff',borderColor:isToday?'oklch(0.82 0.08 264)':'#eef0f3',numColor:isToday?'oklch(0.46 0.17 264)':'#4b5563',numWeight:isToday?800:600,chips,hasMore:dayTasks.length>3,moreCount:dayTasks.length-3}; });
+    const weekdayHeads=['일','월','화','수','목','금','토'].map((w,i)=>({label:w,color:i===0?'oklch(0.6 0.15 15)':i===6?'oklch(0.55 0.13 264)':'#8a94a6'}));
+
+    // team
+    const teamTasks=S.tasks.filter(t=>t.isPublic&&t.team===this.teamCode).filter(t=>showDone||t.status!=='완료').sort((a,b)=>this.diffDays(a.due)-this.diffDays(b.due)).map(dec);
+
+    // notifications decorated
+    const tc={'임박':{label:'기간 임박',color:'oklch(0.55 0.19 25)',bg:'oklch(0.95 0.04 25)'},'업데이트':{label:'작업 업데이트',color:'oklch(0.46 0.17 264)',bg:'oklch(0.95 0.05 264)'},'리마인드':{label:'리마인드',color:'oklch(0.5 0.14 65)',bg:'oklch(0.96 0.06 75)'}};
+    const notifications=S.notifications.map(n=>{ const c=tc[n.type]||tc['업데이트']; return {...n,typeLabel:c.label,typeColor:c.color,typeBg:c.bg,rowBg:n.read?'transparent':'oklch(0.98 0.015 264)',open:this.openFromNotif(n.taskTitle)}; });
+
+    // modal
+    const f=S.form;
+    const priStyle={high:this.seg(f.priority==='높음','oklch(0.62 0.19 25)'),mid:this.seg(f.priority==='보통','oklch(0.68 0.15 65)'),low:this.seg(f.priority==='낮음','oklch(0.55 0.04 260)')};
+    const stStyle={plan:this.seg(f.status==='예정'),prog:this.seg(f.status==='진행중'),done:this.seg(f.status==='완료','oklch(0.55 0.13 150)')};
+    const pubStyle={priv:this.seg(!f.isPublic,'#5b6472'),pub:this.seg(f.isPublic)};
+    const editStyle={allow:this.seg(f.allowEdit!==false,'oklch(0.58 0.13 150)'),deny:this.seg(f.allowEdit===false,'#5b6472')};
+    const editHint = f.allowEdit!==false ? '팀원 누구나 이 업무를 편집하고 완료 처리할 수 있어요.' : '담당자 본인만 편집·완료 처리할 수 있어요.';
+
+    // ---- auth / profile / team ----
+    const cu=S.currentUser;
+    const roster = this.inTeam ? (()=>{ const list=(this.loadUsers()||[]).filter(x=>x.teamCode===this.teamCode).map(x=>x.nickname); if(!list.includes(this.ME)) list.unshift(this.ME); return list; })() : [this.ME];
+    const meNick = cu?cu.nickname:'';
+    const meMem = this.member(meNick);
+    const meAvatarCss = (cu&&cu.avatar)?`center/cover url(${cu.avatar})`:meMem.color;
+    const meAvatarText = (cu&&cu.avatar)?'':meMem.short;
+    const sf=S.settingsForm;
+    const setMem = this.member(sf.nickname||meNick);
+    const setAvatarCss = sf.avatar?`center/cover url(${sf.avatar})`:setMem.color;
+    const nickMsgMap={ok:['✓ 사용 가능한 닉네임이에요','oklch(0.5 0.13 150)'],dup:['이미 사용 중인 닉네임이에요','oklch(0.55 0.19 25)'],same:['현재 사용 중인 닉네임이에요','#8a94a6'],empty:['닉네임을 입력하세요','oklch(0.55 0.19 25)']};
+    const nickMsgArr = S.nickStatus?nickMsgMap[S.nickStatus]:null;
+
+    return {
+      isDesktop:!S.isMobile, isMobile:S.isMobile, navItems,
+      viewTitle:titles[view][0], viewSubtitle:titles[view][1], view,
+      isToday:view==='today',isMyTasks:view==='mytasks',isTimeline:view==='timeline',isMilestone:view==='milestone',isCalendar:view==='calendar',isTeam:view==='team',
+      onBell:this.toggleNotif, onNew:this.openCreate, hasUnread:unread>0, unreadCount:String(unread), notifOpen:S.notifOpen, notifications,
+      installOpen:S.installOpen, onInstall:this.install, onDismissInstall:this.dismissInstall,
+      showNotifBanner:S.notifPermission!=='granted', onEnableNotif:this.enableNotif, onTestNotif:this.testNotif,
+      stats, overdue, hasOverdue:overdue.length>0, overdueCount:String(overdue.length),
+      todayTasks, hasToday:todayTasks.length>0, noToday:todayTasks.length===0, todayLabel:`${todayTasks.length}건`, upcoming,
+      myTasks, myFilters, myEmpty:myTasks.length===0,
+      timeline, milestones,
+      calCells, weekdayHeads, calLabel:`${y}년 ${mo+1}월`, onCalPrev:this.calShift(-1), onCalNext:this.calShift(1), onCalToday:this.calToday,
+      teamTasks, teamCount:teamTasks.length,
+      modalOpen:S.modalOpen, isEdit:S.isEdit, readOnly:S.readOnly, editable:!S.readOnly, modalPE:S.readOnly?'none':'auto', roAssignee:f.assignee, modalTitle:S.readOnly?'업무 상세':S.isEdit?'업무 편집':'새 업무 등록', saveLabel:S.isEdit?'저장':'등록', onCloseModal:this.closeModal, stop:this.stop, onSave:this.saveTask, onDelete:this.deleteTask,
+      form:f, memberNames:roster,
+      loggedIn:!!cu, notLoggedIn:!cu, inTeam:this.inTeam, needTeam:!!cu&&!this.inTeam,
+      authTab:S.authTab, isLoginTab:S.authTab==='login', isSignupTab:S.authTab==='signup', authForm:S.authForm, authError:S.authError, hasAuthError:!!S.authError,
+      onAuthLoginTab:this.setAuthTab('login'), onAuthSignupTab:this.setAuthTab('signup'), loginTabStyle:this.authTabStyle(S.authTab==='login'), signupTabStyle:this.authTabStyle(S.authTab==='signup'),
+      setAuthNick:this.setAuthField('nickname'), setAuthPw:this.setAuthField('password'), setAuthTeam:this.setAuthField('teamCode'), onLogin:this.doLogin, onSignup:this.doSignup,
+      profileMenuOpen:S.profileMenuOpen, onProfile:this.toggleProfile, onCloseProfile:this.closeProfile, onOpenSettings:this.openSettings, onLogout:this.logout,
+      meNick, meAvatarCss, meAvatarText, meTeamLabel: cu?this.teamLabel(cu.teamCode):'',
+      settingsOpen:S.settingsOpen, settingsForm:sf, onCloseSettings:this.closeSettings, setSetNick:this.setSetNick, setSetPw:this.setSetPw, onCheckNick:this.checkNick, onAvatarPick:this.onAvatar, onRemoveAvatar:this.removeAvatar, onSaveSettings:this.saveSettings, onLeaveTeam:this.leaveTeam,
+      setAvatarCss, setHasAvatar:!!sf.avatar, setAvatarText:sf.avatar?'':setMem.short,
+      hasNickMsg:!!nickMsgArr, nickMsg:nickMsgArr?nickMsgArr[0]:'', nickMsgColor:nickMsgArr?nickMsgArr[1]:'#8a94a6',
+      hasTeam:this.inTeam, settingsTeamLabel: cu?this.teamLabel(cu.teamCode):'',
+      teamJoin:S.teamJoin, teamJoinError:S.teamJoinError, hasTeamJoinError:!!S.teamJoinError, setTeamJoin:this.setTeamJoin, onJoinTeam:this.joinTeam,
+      setTitle:this.setField('title'), setContent:this.setField('content'), setAssignee:this.setField('assignee'), setDue:this.setField('due'), setTags:this.setField('tags'),
+      setPriHigh:this.setPri('높음'), setPriMid:this.setPri('보통'), setPriLow:this.setPri('낮음'),
+      setStPlan:this.setSt('예정'), setStProg:this.setSt('진행중'), setStDone:this.setSt('완료'),
+      setPublic:this.setPub(true), setPrivate:this.setPub(false),
+      setAllowEdit:this.setEdit(true), setDenyEdit:this.setEdit(false), editStyle, editHint,
+      setNfDeadline:this.setNf('deadline'), setNfRemind:this.setNf('remind'), setNfUpdate:this.setNf('update'),
+      priStyle, stStyle, pubStyle,
+      toasts:S.toasts.map(t=>({...t, hasUndo:!!t.undoId, onUndo:()=>{ if(t.undoId) this.toggleDone(t.undoId); this.dismissToast(t.id); }})),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -241,7 +241,7 @@ export default function App() {
         </main>
       </div>
 
-      {isMobile && <MobileNav view={view} onNavigate={navigate} />}
+      {isMobile && <MobileNav view={view} onNavigate={navigate} badgeCount={badgeCount} />}
 
       {profileOpen && me && (
         <ProfileMenu
