@@ -13,16 +13,23 @@ export default function TeamJoinCard({ title, description, showDemoCodes = false
   const store = useStore()
   const [code, setCode] = useState('')
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
 
   const join = async () => {
+    if (busy) return
     const v = code.trim().toUpperCase()
     if (!v) {
       setErr('팀 코드를 입력하세요.')
       return
     }
-    const e = await store.joinTeam(v)
-    if (e) setErr(e)
-    else setCode('')
+    setBusy(true)
+    try {
+      const e = await store.joinTeam(v)
+      if (e) setErr(e)
+      else setCode('')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -49,11 +56,11 @@ export default function TeamJoinCard({ title, description, showDemoCodes = false
         }}
       />
       {err && <div style={{ fontSize: 12.5, color: 'oklch(0.55 0.19 25)', marginBottom: 10 }}>{err}</div>}
-      <button className="btn-primary" onClick={join} style={{
+      <button className="btn-primary" onClick={join} disabled={busy} style={{
         width: '100%', height: 46, borderRadius: 12, border: 'none', background: COLOR.primary,
-        color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer'
+        color: '#fff', fontSize: 14, fontWeight: 700, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.7 : 1
       }}>
-        팀 참여하기
+        {busy ? '참여 중…' : '팀 참여하기'}
       </button>
       {showDemoCodes && <div style={{ fontSize: 11.5, color: '#b0b6c0', marginTop: 14 }}>체험용 팀 코드: {DEMO_TEAM_CODES}</div>}
     </div>

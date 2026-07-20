@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CSSProperties, ChangeEvent } from 'react'
 import type { NotifySettings, Priority, Status, TaskForm } from '../types'
 import { COLOR, PRIORITY_META, STATUS_META, memberMeta } from '../config/meta'
@@ -9,7 +9,7 @@ interface Props {
   isEdit: boolean
   readOnly: boolean // 다른 담당자가 편집 제한한 업무 열람
   memberNames: string[]
-  onSave: (form: TaskForm) => void
+  onSave: (form: TaskForm) => Promise<void> | void
   onDelete: () => void
   onClose: () => void
 }
@@ -123,10 +123,26 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
   const setText = (k: 'title' | 'content' | 'assignee' | 'due' | 'tags') =>
     (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => set(k, e.target.value)
 
+  const [busy, setBusy] = useState(false)
+  const inflight = useRef(false) // 동기 가드 — 같은 tick 이중 클릭도 차단
+
   const modalTitle = readOnly ? '업무 상세' : isEdit ? '업무 편집' : '새 업무 등록'
   const editHint = form.allowEdit
     ? '팀원 누구나 이 업무를 편집하고 완료 처리할 수 있어요.'
     : '담당자 본인만 편집·완료 처리할 수 있어요.'
+
+  // 중복 제출 방지: 저장 완료 전까지 재클릭 무시 (ref로 즉시 잠금)
+  const submit = async () => {
+    if (inflight.current) return
+    inflight.current = true
+    setBusy(true)
+    try {
+      await onSave(form)
+    } finally {
+      inflight.current = false
+      setBusy(false)
+    }
+  }
 
   return (
     <div className="overlay-fade" onClick={onClose} style={{
@@ -257,9 +273,11 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
                 <button
                   className="btn-danger-ghost"
                   onClick={onDelete}
+                  disabled={busy}
                   style={{
                     height: 40, padding: '0 14px', borderRadius: 10, border: '1px solid oklch(0.88 0.05 25)',
-                    background: '#fff', color: 'oklch(0.55 0.19 25)', fontSize: 13, fontWeight: 600, cursor: 'pointer'
+                    background: '#fff', color: 'oklch(0.55 0.19 25)', fontSize: 13, fontWeight: 600,
+                    cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1
                   }}
                 >
                   삭제
@@ -268,22 +286,25 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
               <button
                 className="btn-ghost"
                 onClick={onClose}
+                disabled={busy}
                 style={{
                   marginLeft: 'auto', height: 40, padding: '0 16px', borderRadius: 10, border: '1px solid #e0e3e8',
-                  background: '#fff', color: '#4b5563', fontSize: 13, fontWeight: 600, cursor: 'pointer'
+                  background: '#fff', color: '#4b5563', fontSize: 13, fontWeight: 600, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.5 : 1
                 }}
               >
                 취소
               </button>
               <button
                 className="btn-primary"
-                onClick={() => onSave(form)}
+                onClick={submit}
+                disabled={busy}
                 style={{
                   height: 40, padding: '0 20px', borderRadius: 10, border: 'none', background: COLOR.primary,
-                  color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px oklch(0.54 0.16 264/.3)'
+                  color: '#fff', fontSize: 13, fontWeight: 700, cursor: busy ? 'default' : 'pointer',
+                  boxShadow: '0 2px 8px oklch(0.54 0.16 264/.3)', opacity: busy ? 0.7 : 1
                 }}
               >
-                {isEdit ? '저장' : '등록'}
+                {busy ? (isEdit ? '저장 중…' : '등록 중…') : isEdit ? '저장' : '등록'}
               </button>
             </>
           )}
