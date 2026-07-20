@@ -4,6 +4,7 @@
   "compatibility_date": "2026-07-01",
   "rules": [{ "type": "Text", "globs": ["**/*.sql"] }],
   "assets": { "directory": "./dist", "not_found_handling": "single-page-application", "binding": "ASSETS" },
+  "r2_buckets": [{ "binding": "AVATARS", "bucket_name": "q-works-avatars" }],
   "d1_databases": [
     { "binding": "DB", "database_name": "team-task-db", "database_id": "local-test", "migrations_dir": "migrations" }
   ]
