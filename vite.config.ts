@@ -10,7 +10,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'og-image.png'],
+      includeAssets: ['favicon.svg', 'og-image.png', 'icon-192.png', 'icon-512.png'],
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}']
       },
@@ -24,7 +24,9 @@ export default defineConfig({
         background_color: '#eef0f3',
         theme_color: '#3563e8',
         icons: [
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       }
     })

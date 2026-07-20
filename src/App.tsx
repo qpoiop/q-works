@@ -16,6 +16,7 @@ import { InstallBanner, NotifPermissionBanner } from './components/Banners'
 import NotificationPanel from './components/NotificationPanel'
 import TaskModal from './components/TaskModal'
 import ConfirmDialog from './components/ConfirmDialog'
+import InstallGuide from './components/InstallGuide'
 import ProfileMenu from './components/ProfileMenu'
 import SettingsModal from './components/SettingsModal'
 import Toasts from './components/Toasts'
@@ -59,6 +60,7 @@ export default function App() {
   const [modalForm, setModalForm] = useState<TaskForm | null>(null)
   const [modalReadOnly, setModalReadOnly] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [installGuideOpen, setInstallGuideOpen] = useState(false)
   const [confirmLeaveTeam, setConfirmLeaveTeam] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -180,8 +182,9 @@ export default function App() {
   }
 
   const install = async () => {
-    const native = await pwa.install()
-    if (!native) store.toast('브라우저 메뉴 → "홈 화면에 추가"로 설치할 수 있어요', TOAST_COLOR.edit)
+    const result = await pwa.install()
+    if (result === 'installed') store.toast('홈 화면에 설치했어요', TOAST_COLOR.create)
+    else if (result === 'manual') setInstallGuideOpen(true) // 네이티브 프롬프트 불가(iOS 등) → 수동 안내
   }
 
   // ---- 인증 게이트 ----
@@ -317,6 +320,8 @@ export default function App() {
           onCancel={() => setConfirmLeaveTeam(false)}
         />
       )}
+
+      {installGuideOpen && <InstallGuide onClose={() => setInstallGuideOpen(false)} />}
 
       <Toasts toasts={store.toasts} onUndo={(taskId, toastId) => { store.toggleDone(taskId); store.dismissToast(toastId) }} />
     </div>

@@ -6,8 +6,9 @@
   <meta name="description" content="개인 할 일과 팀 공개 업무, 마일스톤과 타임라인을 한 곳에서 관리하세요." />
   <meta name="theme-color" content="#3563e8" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="icon" type="image/png" href="/icon-512.png" />
-  <link rel="apple-touch-icon" href="/icon-512.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://team-task-app.qpoiop3.workers.dev/" />
   <meta property="og:title" content="팀 작업 관리 — 할 일부터 마일스톤까지" />
@@ -22,6 +23,17 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.css" />
   <title>팀 작업 관리</title>
+  <script>
+    // beforeinstallprompt는 번들 로드 전에 발화할 수 있어 여기서 조기 캡처
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault()
+      window.__deferredInstallPrompt = e
+      window.dispatchEvent(new Event('pwa-installable'))
+    })
+    window.addEventListener('appinstalled', function () {
+      window.__deferredInstallPrompt = null
+    })
+  </script>
 </head>
 <body>
   <div id="root"></div>
