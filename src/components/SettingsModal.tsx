@@ -88,22 +88,16 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
   const nickMsg = nickStatus ? NICK_MSG[nickStatus] : null
 
   return (
-    <div className="overlay-fade" onClick={onClose} style={{
-      position: 'fixed', inset: 0, background: 'rgba(16,24,40,.32)', zIndex: 52,
-      display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: 24, overflowY: 'auto'
-    }}>
-      <div className="anim-pop" onClick={(e) => e.stopPropagation()} style={{
-        width: '100%', maxWidth: 480, margin: 'auto', background: '#fff', borderRadius: 18,
-        boxShadow: '0 24px 60px rgba(16,24,40,.28)', overflow: 'hidden'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #eef0f3' }}>
+    <div className="overlay-fade modal-overlay" onClick={onClose} style={{ zIndex: 52 }}>
+      <div className="anim-pop modal-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid #eef0f3' }}>
           <div style={{ fontSize: 16, fontWeight: 700 }}>설정</div>
           <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: 9, border: 'none', background: '#f2f3f5', fontSize: 16, color: '#6b7280', cursor: 'pointer' }}>
             ×
           </button>
         </div>
 
-        <div style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18, maxHeight: '70vh', overflowY: 'auto' }}>
+        <div className="modal-scroll" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <span style={{
               flex: 'none', width: 72, height: 72, borderRadius: '50%',
@@ -186,7 +180,7 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
           <button className="btn-ghost" onClick={onClose} style={{
             marginLeft: 'auto', height: 40, padding: '0 16px', borderRadius: 10, border: '1px solid #e0e3e8',
             background: '#fff', color: '#4b5563', fontSize: 13, fontWeight: 600, cursor: 'pointer'
