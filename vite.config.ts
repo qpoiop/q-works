@@ -7,20 +7,18 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon.svg'],
+      includeAssets: ['favicon.svg', 'og-image.png'],
       manifest: {
         name: '팀 작업 관리',
-        short_name: '팀 작업',
-        description: '앱처럼 바로 열고, 마감·알림을 놓치지 마세요.',
+        short_name: '작업관리',
+        description: '개인 할 일과 팀 공개 업무, 마일스톤과 타임라인을 한 곳에서 관리하세요.',
         lang: 'ko',
         start_url: '/',
         display: 'standalone',
         background_color: '#eef0f3',
-        theme_color: '#3d68ca',
+        theme_color: '#5a54d4',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
         ]
       },
       workbox: {

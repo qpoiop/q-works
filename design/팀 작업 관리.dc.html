@@ -3,6 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>팀 작업 관리</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./icon-512.png">
+<link rel="apple-touch-icon" href="./icon-512.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#5a54d4">
+<meta property="og:type" content="website">
+<meta property="og:title" content="팀 작업 관리 — 할 일부터 마일스톤까지">
+<meta property="og:description" content="개인 할 일과 팀 공개 업무, 마일스톤과 타임라인을 한 곳에서 관리하세요.">
+<meta property="og:image" content="./og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="팀 작업 관리 — 할 일부터 마일스톤까지">
+<meta name="twitter:description" content="개인 할 일과 팀 공개 업무, 마일스톤과 타임라인을 한 곳에서 관리하세요.">
+<meta name="twitter:image" content="./og-image.png">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -31,7 +45,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:oklch(0.54 0.1
     <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
       <aside style="flex:none;width:240px;background:#fff;border-right:1px solid #e8eaed;display:flex;flex-direction:column;padding:20px 14px 16px">
         <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 18px">
-          <span style="width:30px;height:30px;border-radius:9px;background:oklch(0.54 0.16 264);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px">T</span>
+          <svg viewBox="0 0 48 48" width="30" height="30" style="flex:none;display:block"><defs><linearGradient id="piraA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a5cf0"/><stop offset="1" stop-color="#9b5fe0"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="14" fill="url(#piraA)"/><path d="M13 33 L21.5 26 L30 29 L37 15" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="33" r="2.6" fill="#fff"/><circle cx="21.5" cy="26" r="2.6" fill="#fff"/><circle cx="30" cy="29" r="2.6" fill="#fff"/><circle cx="37" cy="15" r="4.4" fill="url(#piraA)" stroke="#fff" stroke-width="2.7"/></svg>
           <span style="font-size:15px;font-weight:700;letter-spacing:-.2px">팀 작업 관리</span>
         </div>
         <nav style="display:flex;flex-direction:column;gap:2px">
@@ -270,7 +284,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:oklch(0.54 0.1
     <div style="position:fixed;inset:0;background:radial-gradient(120% 100% at 50% 0%,oklch(0.55 0.14 275) 0%,oklch(0.42 0.13 285) 60%,oklch(0.34 0.1 290) 100%);display:flex;align-items:center;justify-content:center;padding:22px;z-index:80;overflow-y:auto">
       <div style="width:100%;max-width:420px;background:#fff;border-radius:22px;box-shadow:0 30px 70px rgba(16,24,40,.4);padding:30px 28px;animation:omPop .25s ease;margin:auto">
         <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
-          <span style="width:38px;height:38px;border-radius:11px;background:oklch(0.54 0.16 264);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">T</span>
+          <svg viewBox="0 0 48 48" width="42" height="42" style="flex:none;display:block"><defs><linearGradient id="piraB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a5cf0"/><stop offset="1" stop-color="#9b5fe0"/></linearGradient></defs><rect x="2" y="2" width="44" height="44" rx="14" fill="url(#piraB)"/><path d="M13 33 L21.5 26 L30 29 L37 15" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="33" r="2.6" fill="#fff"/><circle cx="21.5" cy="26" r="2.6" fill="#fff"/><circle cx="30" cy="29" r="2.6" fill="#fff"/><circle cx="37" cy="15" r="4.4" fill="url(#piraB)" stroke="#fff" stroke-width="2.7"/></svg>
           <div><div style="font-size:18px;font-weight:800;letter-spacing:-.4px">팀 작업 관리</div><div style="font-size:12px;color:#8a94a6">할 일 · 마일스톤 · 팀 타임라인</div></div>
         </div>
         <div style="display:flex;gap:4px;background:#f2f3f5;border-radius:12px;padding:4px;margin-bottom:20px">
