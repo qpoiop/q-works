@@ -54,7 +54,15 @@ export default function App() {
   const { tasks, roster, me, milestones, notifications } = store
   const isMobile = useIsMobile()
 
-  const [view, setView] = useState<ViewKey>('today')
+  const [view, setViewState] = useState<ViewKey>(() => {
+    // 새로고침·SW 업데이트에도 현재 탭 유지 (홈으로 튐 방지)
+    const saved = localStorage.getItem('view')
+    return NAV_ITEMS.some((n) => n.key === saved) ? (saved as ViewKey) : 'today'
+  })
+  const setView = (v: ViewKey) => {
+    localStorage.setItem('view', v)
+    setViewState(v)
+  }
   const [myFilter, setMyFilter] = useState<MyFilter>('전체')
   const [notifOpen, setNotifOpen] = useState(false)
   const [modalForm, setModalForm] = useState<TaskForm | null>(null)
