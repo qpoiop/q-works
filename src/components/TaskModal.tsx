@@ -243,7 +243,7 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
             <button type="button" onClick={() => setAdvOpen((v) => !v)} style={accordionHeaderStyle}>
               고급 설정
               <span style={{ fontWeight: 400, fontSize: 11.5, color: '#9aa0aa' }}>태그 · 공개 범위 · 편집 권한 · 알림</span>
-              <span style={{ marginLeft: 'auto', color: '#c2c8d2', fontSize: 12, transition: 'transform .15s', transform: advOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
+              <span style={{ marginLeft: 'auto', color: '#c2c8d2', fontSize: 12, transition: 'transform .15s', transform: advOpen ? 'rotate(90deg)' : 'none' }}>{'▶︎'}</span>
             </button>
             {advOpen && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 2, paddingBottom: 4 }}>
