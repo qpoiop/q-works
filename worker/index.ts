@@ -1,4 +1,4 @@
-import type { AppNotification, Task } from './types'
+import type { AppNotification, NotifType, Task } from './types'
 import schema1 from '../migrations/0001_init.sql'
 import schema2 from '../migrations/0002_auth_teams.sql'
 import schema3 from '../migrations/0003_push_subscriptions.sql'
@@ -512,7 +512,69 @@ async function serveAvatar(request: Request, env: Env, ctx: ExecutionContext): P
   return request.method === 'HEAD' ? new Response(null, { headers }) : res
 }
 
+/* ---------- 예약 알림 (Cron) ---------- */
+// KST(UTC+9) 기준 YYYY-MM-DD
+function kstDate(epochMs: number): string {
+  return new Date(epochMs + 9 * 3600 * 1000).toISOString().slice(0, 10)
+}
+
+interface DueRow {
+  id: string; title: string; assignee: string; due: string
+  notify_deadline: number; notify_daily: number
+}
+
+// 인앱 알림 기록 + Web Push 발송 (사용자당 최근 50건 유지)
+async function pushAndRecord(env: Env, nickname: string, type: NotifType, title: string, detail: string): Promise<void> {
+  const db = env.DB!
+  const id = 'n' + Date.now() + Math.random().toString(36).slice(2, 8)
+  await db
+    .prepare('INSERT INTO notifications (id, type, task_id, task_title, detail, created_at, read, user_nickname) VALUES (?, ?, NULL, ?, ?, ?, 0, ?)')
+    .bind(id, type, title, detail, new Date().toISOString(), nickname)
+    .run()
+  await db
+    .prepare('DELETE FROM notifications WHERE user_nickname = ? AND id NOT IN (SELECT id FROM notifications WHERE user_nickname = ? ORDER BY created_at DESC LIMIT ?)')
+    .bind(nickname, nickname, MAX_NOTIFICATIONS)
+    .run()
+  await sendPushToUser(env, nickname, title, detail)
+}
+
+// 슬롯(오전10시=01:00 UTC / 오후4시=07:00 UTC)에 마감 임박·매일 리마인드 발송
+async function runScheduledNotify(env: Env, controller: ScheduledController): Promise<void> {
+  if (!env.DB) return
+  await ensureMigrated(env.DB)
+  const slot = controller.cron === '0 7 * * *' ? '16:00' : '10:00'
+  const today = kstDate(controller.scheduledTime)
+  const tomorrow = kstDate(controller.scheduledTime + 24 * 3600 * 1000)
+
+  const rows = (
+    await env.DB.prepare(
+      `SELECT id, title, assignee, due, notify_deadline, notify_daily
+         FROM tasks
+        WHERE status != '완료' AND notify_time = ? AND (notify_deadline = 1 OR notify_daily = 1)`
+    )
+      .bind(slot)
+      .all<DueRow>()
+  ).results
+
+  // 담당자별 집계 — 마감 임박(당일·D-1) / 매일 리마인드
+  const perUser = new Map<string, { deadline: string[]; daily: string[] }>()
+  for (const r of rows) {
+    const b = perUser.get(r.assignee) ?? { deadline: [], daily: [] }
+    if (r.notify_deadline && (r.due === today || r.due === tomorrow)) b.deadline.push(r.title)
+    if (r.notify_daily) b.daily.push(r.title)
+    if (b.deadline.length || b.daily.length) perUser.set(r.assignee, b)
+  }
+
+  for (const [nickname, b] of perUser) {
+    if (b.deadline.length) await pushAndRecord(env, nickname, '임박', `마감 임박 · ${b.deadline.length}건`, b.deadline.join(', '))
+    if (b.daily.length) await pushAndRecord(env, nickname, '리마인드', `오늘의 미완료 업무 · ${b.daily.length}건`, b.daily.join(', '))
+  }
+}
+
 export default {
+  async scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(runScheduledNotify(env, controller))
+  },
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
     if (url.pathname.startsWith('/api/')) {
