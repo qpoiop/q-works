@@ -3,6 +3,7 @@ import schema1 from '../migrations/0001_init.sql'
 import schema2 from '../migrations/0002_auth_teams.sql'
 import schema3 from '../migrations/0003_push_subscriptions.sql'
 import schema4 from '../migrations/0004_notify_daily_time.sql'
+import schema5 from '../migrations/0005_notify_time_normalize.sql'
 import {
   FIELD_LIMITS, MAX_NOTIFICATIONS, MAX_TASKS, MAX_USERS,
   bodyTooLarge, checkAuthRateLimit, checkRateLimit, isCrossSiteMutation, withSecurityHeaders
@@ -41,7 +42,8 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   { name: '0001_init', sql: schema1 },
   { name: '0002_auth_teams', sql: schema2 },
   { name: '0003_push_subscriptions', sql: schema3 },
-  { name: '0004_notify_daily_time', sql: schema4 }
+  { name: '0004_notify_daily_time', sql: schema4 },
+  { name: '0005_notify_time_normalize', sql: schema5 }
 ]
 
 /** 시안 시드 멤버 + 체험 계정 — users 시드용 (비밀번호 '1234') */

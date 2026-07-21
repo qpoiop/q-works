@@ -29,7 +29,8 @@
 
 ## DB 스키마 (D1)
 
-- `tasks(id, title, content, assignee, due, priority, status, tags(JSON), is_public, team_code, allow_edit, prev_status, notify_*, …)`
+- `tasks(id, title, content, assignee, due, priority, status, tags(JSON), is_public, team_code, allow_edit, prev_status, notify_update, notify_deadline, notify_daily, notify_time, …)`
+  - `notify_time`: 발송 시각 고정 슬롯 `'10:00'`·`'16:00'`(KST). `notify_remind` 컬럼은 미사용(레거시, 항상 0)
 - `users(id, nickname UNIQUE, password_hash, salt, team_code→teams, avatar(dataURL≤96KB))`
 - `sessions(token PK, user_id, expires_at)` / `teams(code PK, name)` / `push_tokens(token PK, user_nickname, platform)`
 - `notifications(id, type, task_id, task_title, detail, created_at, read, user_nickname)` — 사용자당 최근 200건 유지
@@ -72,6 +73,22 @@
 2. `npx wrangler secret put FCM_SERVICE_ACCOUNT` (JSON 전체)
 3. 클라: `npm i firebase` → `src/lib/push.ts`에 config/vapidKey 연결 → `firebase-messaging-sw.js` 추가
 4. 이후 `/api/notifications` 생성 시 대상 사용자의 모든 기기로 자동 발송 (`ctx.waitUntil`, 404/400 토큰 자동 삭제)
+
+## 알림 (Notifications)
+
+업무별 3종 옵션 — `변경 시`(update)·`마감일 도래 시`(deadline)·`매일`(daily). `TaskModal` 고급 설정에서
+마스터 토글 + 다중선택 칩으로 설정. deadline·daily는 **발송 시각**(고정 슬롯 오전 10시·오후 4시) 선택.
+
+- **즉시 알림** (변경 시): 상태 변경 시(`toggleDone` 완료 토글 · `saveTask` 모달 저장) 담당자 본인이면
+  인앱 알림 기록 + Web Push. `notify.update` 꺼짐/타인 담당/상태 무변화면 미발송.
+- **예약 알림** (마감일 도래·매일): `worker/index.ts`의 `scheduled` 핸들러가 Cron으로 실행.
+  - Cron: `0 1 * * *`(01:00 UTC=오전 10시 KST) · `0 7 * * *`(07:00 UTC=오후 4시 KST) — `wrangler.jsonc` `triggers.crons`
+  - 슬롯별로 `notify_time` 일치 + 미완료 업무 스캔 → 담당자별 집계 → 마감 임박(당일·D-1) + 매일 리마인드
+    각각 인앱 기록 + `sendPushToUser`. KST 날짜는 `scheduledTime` 기반 계산(전역 `Date` 함정 회피).
+  - 로컬 트리거: `curl "http://localhost:8788/cdn-cgi/handler/scheduled?cron=0+1+*+*+*"`
+
+**슬롯 확장 시** 3곳 동기화: `wrangler.jsonc` crons · `worker` `NOTIFY_SLOTS`(clamp) · `TaskModal` `NOTIFY_SLOTS`(UI).
+슬롯을 늘리면 cron 실행 수가 비례 증가하므로 부하 상한 관점에서 최소로 유지.
 
 ## 개발·배포
 
