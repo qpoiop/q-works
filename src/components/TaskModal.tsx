@@ -334,7 +334,7 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
           )}
         </div>
 
-        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px calc(16px + env(safe-area-inset-bottom))', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
           {readOnly ? (
             <button
               className="btn-ghost"

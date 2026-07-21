@@ -16,7 +16,9 @@ export default function Header({ title, subtitle, unreadCount, onBell, onNew, is
   const meta = memberMeta(me?.nickname ?? '')
   return (
     <header style={{
-      flex: 'none', display: 'flex', alignItems: 'center', gap: 12, padding: '15px 22px',
+      flex: 'none', display: 'flex', alignItems: 'center', gap: 12,
+      // iOS standalone: 노치/다이나믹아일랜드·landscape 노치 안전영역 확보
+      padding: 'calc(15px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right)) 15px calc(22px + env(safe-area-inset-left))',
       background: '#fff', borderBottom: '1px solid #e8eaed', zIndex: 2
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>

@@ -14,8 +14,9 @@ interface Props {
 export default function Sidebar({ view, onNavigate, badgeCount, me, onProfile }: Props) {
   return (
     <aside style={{
-      flex: 'none', width: 240, background: '#fff', borderRight: '1px solid #e8eaed',
-      display: 'flex', flexDirection: 'column', padding: '20px 14px 16px'
+      flex: 'none', width: 240, background: '#fff', borderRight: '1px solid #e8eaed', display: 'flex', flexDirection: 'column',
+      // iPad standalone: 상단 노치·좌측(landscape)·하단 홈바 안전영역
+      padding: 'calc(20px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left))'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 18px' }}>
         <Logo size={30} />
