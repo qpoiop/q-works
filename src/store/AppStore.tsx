@@ -212,6 +212,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       const base: Omit<Task, 'id'> = {
         title: form.title.trim(),
         content: form.content.trim(),
+        contentFormat: form.contentFormat,
         assignee: form.assignee,
         due: form.due,
         priority: form.priority,

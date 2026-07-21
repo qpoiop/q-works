@@ -29,7 +29,8 @@
 
 ## DB 스키마 (D1)
 
-- `tasks(id, title, content, assignee, due, priority, status, tags(JSON), is_public, team_code, allow_edit, prev_status, notify_update, notify_deadline, notify_daily, notify_time, …)`
+- `tasks(id, title, content, content_format, assignee, due, priority, status, tags(JSON), is_public, team_code, allow_edit, prev_status, notify_update, notify_deadline, notify_daily, notify_time, …)`
+  - `content_format`: `'plain'`|`'markdown'` (상세 내용 렌더 방식)
   - `notify_time`: 발송 시각 고정 슬롯 `'10:00'`·`'16:00'`(KST). `notify_remind` 컬럼은 미사용(레거시, 항상 0)
 - `users(id, nickname UNIQUE, password_hash, salt, team_code→teams, avatar(dataURL≤96KB))`
 - `sessions(token PK, user_id, expires_at)` / `teams(code PK, name)` / `push_tokens(token PK, user_nickname, platform)`
@@ -73,6 +74,18 @@
 2. `npx wrangler secret put FCM_SERVICE_ACCOUNT` (JSON 전체)
 3. 클라: `npm i firebase` → `src/lib/push.ts`에 config/vapidKey 연결 → `firebase-messaging-sw.js` 추가
 4. 이후 `/api/notifications` 생성 시 대상 사용자의 모든 기기로 자동 발송 (`ctx.waitUntil`, 404/400 토큰 자동 삭제)
+
+## 상세 내용 에디터 (PLAIN / MARKDOWN)
+
+`TaskModal`에서 상세 내용 포맷을 `일반`/`마크다운` 탭으로 전환. 마크다운은 `미리보기` 토글 제공.
+
+- 렌더: `src/lib/markdown.ts` `renderMarkdown()` = **marked**(GFM) → **DOMPurify** 살균.
+  raw HTML 입력 모드는 없지만 소스에 HTML이 섞여도 `script`·`on*`·`javascript:` URI 제거.
+  외부 링크는 `afterSanitizeAttributes` 훅으로 `target=_blank rel=noopener noreferrer` 강제.
+- 표시: `.md-body` 클래스로 스타일. `dangerouslySetInnerHTML`에는 **항상 살균 출력만** 주입.
+- 카드 스니펫: `mdToPlain()`으로 마커 제거한 1줄 평문.
+- 보안: 저장은 raw 소스, **살균은 렌더 시점**. CSP(`script-src 'self'`)가 2차 방어.
+  검증 완료 — `<img onerror>`·`javascript:` 링크·`<script>` 모두 제거됨(CSP 없는 vite dev에서도 DOMPurify 단독 차단).
 
 ## 알림 (Notifications)
 

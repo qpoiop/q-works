@@ -3,6 +3,15 @@ import type { CSSProperties, ChangeEvent } from 'react'
 import type { NotifySettings, Priority, Status, TaskForm } from '../types'
 import { COLOR, PRIORITY_META, STATUS_META, memberMeta } from '../config/meta'
 import { dueMeta, fmtDate } from '../lib/date'
+import { renderMarkdown } from '../lib/markdown'
+
+/** 상세 내용 포맷 미니 탭 */
+function miniTab(active: boolean): CSSProperties {
+  return {
+    padding: '4px 10px', fontSize: 11.5, fontWeight: 600, borderRadius: 7, cursor: 'pointer',
+    border: `1px solid ${active ? 'transparent' : '#e0e3e8'}`, background: active ? COLOR.primary : '#fff', color: active ? '#fff' : '#5b6472'
+  }
+}
 
 interface Props {
   form: TaskForm
@@ -81,7 +90,12 @@ function ReadOnlyDetail({ form }: { form: TaskForm }) {
       <div>
         <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.2px', lineHeight: 1.4 }}>{form.title}</div>
         {form.content && (
-          <div style={{ marginTop: 8, fontSize: 13.5, color: '#4b5563', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{form.content}</div>
+          form.contentFormat === 'markdown' ? (
+            <div className="md-body" style={{ marginTop: 8, fontSize: 13.5, color: '#4b5563', lineHeight: 1.6 }}
+              dangerouslySetInnerHTML={{ __html: renderMarkdown(form.content) }} />
+          ) : (
+            <div style={{ marginTop: 8, fontSize: 13.5, color: '#4b5563', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{form.content}</div>
+          )
         )}
       </div>
       <div style={{ borderTop: '1px solid #eef0f3', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -143,6 +157,7 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
   const [busy, setBusy] = useState(false)
   const inflight = useRef(false) // 동기 가드 — 같은 tick 이중 클릭도 차단
 
+  const [preview, setPreview] = useState(false) // 마크다운 미리보기 토글
   const setNotify = (patch: Partial<NotifySettings>) => set('notify', { ...form.notify, ...patch })
   const notifOn = form.notify.update || form.notify.deadline || form.notify.daily
   const needTime = form.notify.deadline || form.notify.daily
@@ -193,13 +208,34 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
             <input value={form.title} onChange={setText('title')} placeholder="업무 제목을 입력하세요" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>상세 내용</label>
-            <textarea
-              value={form.content}
-              onChange={setText('content')}
-              placeholder="무엇을, 어떻게 진행할지 적어주세요"
-              style={{ ...inputStyle, height: 'auto', minHeight: 84, padding: '11px 13px', resize: 'vertical', lineHeight: 1.5 }}
-            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <label style={{ ...labelStyle, marginBottom: 0 }}>상세 내용</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button type="button" onClick={() => { set('contentFormat', 'plain'); setPreview(false) }} style={miniTab(form.contentFormat === 'plain')}>일반</button>
+                  <button type="button" onClick={() => set('contentFormat', 'markdown')} style={miniTab(form.contentFormat === 'markdown')}>마크다운</button>
+                </div>
+                {form.contentFormat === 'markdown' && (
+                  <button type="button" onClick={() => setPreview((p) => !p)} style={miniTab(preview)}>
+                    {preview ? '편집' : '미리보기'}
+                  </button>
+                )}
+              </div>
+            </div>
+            {form.contentFormat === 'markdown' && preview ? (
+              <div
+                className="md-body"
+                style={{ minHeight: 84, padding: '11px 13px', border: '1px solid #e0e3e8', borderRadius: 10, background: '#fbfbfc', fontSize: 13.5, lineHeight: 1.6 }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(form.content) }}
+              />
+            ) : (
+              <textarea
+                value={form.content}
+                onChange={setText('content')}
+                placeholder={form.contentFormat === 'markdown' ? '마크다운 — **굵게**, - 목록, > 인용, `코드`, [링크](url)' : '무엇을, 어떻게 진행할지 적어주세요'}
+                style={{ ...inputStyle, height: 'auto', minHeight: 84, padding: '11px 13px', resize: 'vertical', lineHeight: 1.5 }}
+              />
+            )}
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 180 }}>

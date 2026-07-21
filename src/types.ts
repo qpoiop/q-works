@@ -1,6 +1,7 @@
 export type Priority = '높음' | '보통' | '낮음'
 export type Status = '예정' | '진행중' | '완료'
 export type NotifType = '임박' | '업데이트' | '리마인드'
+export type ContentFormat = 'plain' | 'markdown'
 export type ViewKey = 'today' | 'mytasks' | 'timeline' | 'milestone' | 'calendar' | 'team'
 
 export interface NotifySettings {
@@ -14,6 +15,7 @@ export interface Task {
   id: string
   title: string
   content: string
+  contentFormat: ContentFormat // 상세 내용 렌더 방식
   assignee: string
   due: string // YYYY-MM-DD
   priority: Priority
@@ -62,6 +64,7 @@ export interface TaskForm {
   id: string | null
   title: string
   content: string
+  contentFormat: ContentFormat
   assignee: string
   due: string
   priority: Priority

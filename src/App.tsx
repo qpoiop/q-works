@@ -43,7 +43,7 @@ function useIsMobile() {
 
 function blankForm(assignee: string): TaskForm {
   return {
-    id: null, title: '', content: '', assignee, due: toDateStr(today()),
+    id: null, title: '', content: '', contentFormat: 'plain', assignee, due: toDateStr(today()),
     priority: '보통', status: '예정', tags: '', isPublic: false, allowEdit: true,
     notify: { update: true, deadline: true, daily: false, time: '10:00' }
   }
@@ -105,7 +105,7 @@ export default function App() {
     setNotifOpen(false)
     setModalReadOnly(!store.canEdit(t))
     setModalForm({
-      id: t.id, title: t.title, content: t.content, assignee: t.assignee, due: t.due,
+      id: t.id, title: t.title, content: t.content, contentFormat: t.contentFormat ?? 'plain', assignee: t.assignee, due: t.due,
       priority: t.priority, status: t.status, tags: t.tags.join(', '),
       isPublic: t.isPublic, allowEdit: t.allowEdit !== false, notify: { ...t.notify }
     })
