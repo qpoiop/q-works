@@ -15,8 +15,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}']
       },
       manifest: {
-        name: '팀 작업 관리',
-        short_name: '작업관리',
+        name: '업무 관리',
+        short_name: '업무관리',
         description: '개인 할 일과 팀 공개 업무, 마일스톤과 타임라인을 한 곳에서 관리하세요.',
         lang: 'ko',
         start_url: '/',

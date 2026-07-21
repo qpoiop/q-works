@@ -159,7 +159,7 @@ export default function App() {
       setPermission(p)
       if (p === 'granted') {
         store.toast('브라우저 알림을 켰어요', TOAST_COLOR.create)
-        fireBrowserNotif('팀 작업 관리', '마감 임박·업데이트를 알려드릴게요.')
+        fireBrowserNotif('업무 관리', '마감 임박·업데이트를 알려드릴게요.')
         checkDeadlines(tasks, me?.nickname)
         // 앱이 닫혀 있어도 알림 받도록 Web Push 구독
         await subscribePush()
@@ -184,7 +184,7 @@ export default function App() {
       await api.testPush()
       store.toast('테스트 푸시를 보냈어요', TOAST_COLOR.edit)
     } catch {
-      fireBrowserNotif('팀 작업 관리', '알림이 잘 동작해요. (테스트)')
+      fireBrowserNotif('업무 관리', '알림이 잘 동작해요. (테스트)')
       store.toast('테스트 알림을 보냈어요', TOAST_COLOR.edit)
     }
   }

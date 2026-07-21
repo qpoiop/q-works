@@ -20,7 +20,7 @@ export default function Sidebar({ view, onNavigate, badgeCount, me, onProfile }:
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px 18px' }}>
         <Logo size={30} />
-        <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>팀 작업 관리</span>
+        <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-.2px' }}>업무 관리</span>
       </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV_ITEMS.map((item) => {
