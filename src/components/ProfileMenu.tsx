@@ -3,14 +3,15 @@ import Avatar from './Avatar'
 interface Props {
   nickname: string
   avatar: string | null
-  teamLabel: string
+  teamName: string | null
   onSettings: () => void
+  onJoinTeam: () => void
   onLogout: () => void
   onClose: () => void
 }
 
 /** 시안 v2 프로필 드롭다운 */
-export default function ProfileMenu({ nickname, avatar, teamLabel, onSettings, onLogout, onClose }: Props) {
+export default function ProfileMenu({ nickname, avatar, teamName, onSettings, onJoinTeam, onLogout, onClose }: Props) {
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 44, animation: 'omFade .15s ease' }} />
@@ -22,7 +23,19 @@ export default function ProfileMenu({ nickname, avatar, teamLabel, onSettings, o
           <Avatar name={nickname} avatar={avatar} size={40} fontSize={14} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nickname}</div>
-            <div style={{ fontSize: 11.5, color: '#8a94a6' }}>{teamLabel}</div>
+            {teamName ? (
+              <div style={{ fontSize: 11.5, color: '#8a94a6', marginTop: 2 }}>소속 팀: {teamName}</div>
+            ) : (
+              <button
+                onClick={onJoinTeam}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '3px 9px', border: 'none',
+                  background: '#eef2ff', borderRadius: 999, fontSize: 11.5, fontWeight: 600, color: '#4f6bed', cursor: 'pointer'
+                }}
+              >
+                소속 팀: 참여하기 →
+              </button>
+            )}
           </div>
         </div>
         <div style={{ padding: 6 }}>
@@ -34,7 +47,7 @@ export default function ProfileMenu({ nickname, avatar, teamLabel, onSettings, o
               background: 'transparent', borderRadius: 9, fontSize: 13.5, fontWeight: 500, color: '#3a3f47', cursor: 'pointer', textAlign: 'left'
             }}
           >
-            <span style={{ fontSize: 14 }}>⚙</span>설정
+            <span style={{ width: 18, textAlign: 'center', fontSize: 16 }}>⚙</span>설정
           </button>
           <button
             className="menu-item-danger"
@@ -44,7 +57,7 @@ export default function ProfileMenu({ nickname, avatar, teamLabel, onSettings, o
               background: 'transparent', borderRadius: 9, fontSize: 13.5, fontWeight: 500, color: 'oklch(0.55 0.19 25)', cursor: 'pointer', textAlign: 'left'
             }}
           >
-            <span style={{ fontSize: 14 }}>⎋</span>로그아웃
+            <span style={{ width: 18, textAlign: 'center', fontSize: 16 }}>⎋</span>로그아웃
           </button>
         </div>
       </div>

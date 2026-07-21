@@ -2,6 +2,7 @@ import type { AppNotification, Task } from './types'
 import schema1 from '../migrations/0001_init.sql'
 import schema2 from '../migrations/0002_auth_teams.sql'
 import schema3 from '../migrations/0003_push_subscriptions.sql'
+import schema4 from '../migrations/0004_notify_daily_time.sql'
 import {
   FIELD_LIMITS, MAX_NOTIFICATIONS, MAX_TASKS, MAX_USERS,
   bodyTooLarge, checkAuthRateLimit, checkRateLimit, isCrossSiteMutation, withSecurityHeaders
@@ -39,7 +40,8 @@ class LimitError extends Error {}
 const MIGRATIONS: { name: string; sql: string }[] = [
   { name: '0001_init', sql: schema1 },
   { name: '0002_auth_teams', sql: schema2 },
-  { name: '0003_push_subscriptions', sql: schema3 }
+  { name: '0003_push_subscriptions', sql: schema3 },
+  { name: '0004_notify_daily_time', sql: schema4 }
 ]
 
 /** 시안 시드 멤버 + 체험 계정 — users 시드용 (비밀번호 '1234') */
@@ -96,6 +98,13 @@ interface TaskRow {
   priority: Task['priority']; status: Task['status']; tags: string
   is_public: number; locked: number; team_code: string | null; allow_edit: number; prev_status: Task['status'] | null
   notify_update: number; notify_remind: number; notify_deadline: number
+  notify_daily: number; notify_time: string
+}
+
+// 알림 발송 시각: cron 부하 관리를 위해 고정 슬롯 2개만 허용
+const NOTIFY_SLOTS = ['10:00', '16:00']
+function sanitizeTime(t: unknown): string {
+  return typeof t === 'string' && NOTIFY_SLOTS.includes(t) ? t : NOTIFY_SLOTS[0]
 }
 
 function rowToTask(r: TaskRow): Task {
@@ -105,7 +114,7 @@ function rowToTask(r: TaskRow): Task {
     tags: JSON.parse(r.tags || '[]') as string[],
     isPublic: !!r.is_public,
     team: r.team_code, allowEdit: !!r.allow_edit, prevStatus: r.prev_status,
-    notify: { update: !!r.notify_update, remind: !!r.notify_remind, deadline: !!r.notify_deadline }
+    notify: { update: !!r.notify_update, deadline: !!r.notify_deadline, daily: !!r.notify_daily, time: r.notify_time || '09:00' }
   }
 }
 
@@ -362,13 +371,13 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
       const id = crypto.randomUUID()
       await db
         .prepare(
-          `INSERT INTO tasks (id, title, content, assignee, due, priority, status, tags, is_public, locked, team_code, allow_edit, prev_status, notify_update, notify_remind, notify_deadline)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, ?, ?, ?)`
+          `INSERT INTO tasks (id, title, content, assignee, due, priority, status, tags, is_public, locked, team_code, allow_edit, prev_status, notify_update, notify_remind, notify_deadline, notify_daily, notify_time)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, ?, 0, ?, ?, ?)`
         )
         .bind(
           id, body.title.trim(), body.content ?? '', body.assignee || me.nickname, body.due, body.priority, body.status,
           JSON.stringify(body.tags ?? []), body.isPublic ? 1 : 0, me.teamCode, body.allowEdit === false ? 0 : 1,
-          body.notify?.update ? 1 : 0, body.notify?.remind ? 1 : 0, body.notify?.deadline ? 1 : 0
+          body.notify?.update ? 1 : 0, body.notify?.deadline ? 1 : 0, body.notify?.daily ? 1 : 0, sanitizeTime(body.notify?.time)
         )
         .run()
       const row = await getTaskRow(db, id)
@@ -392,12 +401,12 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
         await db
           .prepare(
             `UPDATE tasks SET title=?, content=?, assignee=?, due=?, priority=?, status=?, tags=?, is_public=?, allow_edit=?, prev_status=?,
-             notify_update=?, notify_remind=?, notify_deadline=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?`
+             notify_update=?, notify_deadline=?, notify_daily=?, notify_time=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?`
           )
           .bind(
             next.title, next.content, next.assignee, next.due, next.priority, next.status,
             JSON.stringify(next.tags), next.isPublic ? 1 : 0, next.allowEdit === false ? 0 : 1, next.prevStatus ?? null,
-            next.notify.update ? 1 : 0, next.notify.remind ? 1 : 0, next.notify.deadline ? 1 : 0, id
+            next.notify.update ? 1 : 0, next.notify.deadline ? 1 : 0, next.notify.daily ? 1 : 0, sanitizeTime(next.notify.time), id
           )
           .run()
         return json(next)

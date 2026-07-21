@@ -225,6 +225,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       }
       try {
         if (form.id) {
+          const prevTask = dataRef.current.tasks.find((t) => t.id === form.id)
           const prev = dataRef.current.tasks
           setTasks((ts) => ts.map((t) => (t.id === form.id ? { ...t, ...base } : t)))
           try {
@@ -234,6 +235,9 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
             throw e
           }
           toast('업무가 수정됐어요', TOAST_COLOR.edit)
+          // '변경 시' 알림 — 담당자 본인이고 상태가 실제로 바뀐 경우
+          if (base.notify.update && me && base.assignee === me.nickname && prevTask && prevTask.status !== base.status)
+            pushNotification('업데이트', { id: form.id, title: base.title }, `상태가 ${base.status}(으)로 변경됐어요.`)
         } else {
           const created = await api.createTask(base)
           setTasks((ts) => [...ts, created])
@@ -248,7 +252,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         return false
       }
     },
-    [toast]
+    [toast, pushNotification]
   )
 
   const deleteTask = useCallback(

@@ -4,9 +4,10 @@ export type NotifType = '임박' | '업데이트' | '리마인드'
 export type ViewKey = 'today' | 'mytasks' | 'timeline' | 'milestone' | 'calendar' | 'team'
 
 export interface NotifySettings {
-  update: boolean
-  remind: boolean
-  deadline: boolean
+  update: boolean // 변경 시
+  deadline: boolean // 마감일 도래 시
+  daily: boolean // 매일
+  time: string // "HH:MM" — deadline·daily 발송 시각
 }
 
 export interface Task {
