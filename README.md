@@ -1,10 +1,35 @@
 # Q-WORKS · 팀 작업 관리
 
-Claude Design 시안(`팀 작업 관리.dc.html` v2)을 1:1로 구현한 팀 업무 관리 웹앱.
+Claude Design 시안(`팀 작업 관리.dc.html`)을 1:1로 구현한 팀 업무 관리 웹앱.
 
 - **프런트엔드**: React 18 + Vite + TypeScript, PWA(vite-plugin-pwa, 오프라인 셸 캐시·홈 화면 설치)
-- **백엔드**: Cloudflare Worker (정적 자산 + `/api/*` JSON API) + D1
+- **백엔드**: Cloudflare Worker (정적 자산 + `/api/*` JSON API) + D1 + R2(아바타)
 - **배포 URL**: https://team-task-app.qpoiop3.workers.dev (체험 계정: `테스터` / `1234`)
+
+## 화면
+
+### 오늘 (대시보드)
+남은 작업·오늘/지연 마감·완료 통계, 마감 초과·오늘 할 일·앞으로 할 일 구분.
+
+![오늘](docs/screenshots/01-today.png)
+
+### 타임라인 · 마일스톤
+마감일 순서로 보는 내 업무·팀 공개 업무 / 목표별 진행률.
+
+| 타임라인 | 마일스톤 |
+| --- | --- |
+| ![타임라인](docs/screenshots/02-timeline.png) | ![마일스톤](docs/screenshots/03-milestone.png) |
+
+### 캘린더 · 팀 대시보드
+월간 일정. **날짜(또는 칩)를 선택하면 해당 날짜 일감 레이어**가 뜨고, 일감을 탭하면 상세로.
+
+| 캘린더 | 날짜 일감 레이어 |
+| --- | --- |
+| ![캘린더](docs/screenshots/04-calendar.png) | ![일감 레이어](docs/screenshots/05-calendar-daylayer.png) |
+
+| 팀 대시보드 | 로그인 | 모바일 |
+| --- | --- | --- |
+| ![팀](docs/screenshots/06-team.png) | ![로그인](docs/screenshots/00-login.png) | ![모바일](docs/screenshots/07-mobile-today.png) |
 
 ## 기능
 
