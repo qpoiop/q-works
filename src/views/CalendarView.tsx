@@ -86,7 +86,7 @@ export default function CalendarView({ tasks, me, year, month, onShift, onToday,
                   return (
                     <div
                       key={t.id}
-                      onClick={(e) => { e.stopPropagation(); onOpen(t.id) }}
+                      onClick={(e) => { e.stopPropagation(); setDayOpen(c.dateStr!) }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 500, padding: '2px 5px',
                         borderRadius: 5, background: due.bg === '#eef0f3' ? '#f4f6f9' : due.bg, color: '#4b5563',

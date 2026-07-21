@@ -8,7 +8,8 @@ declare const self: ServiceWorkerGlobalScope & {
 // 앱 셸 프리캐시 (vite-plugin-pwa injectManifest)
 precacheAndRoute(self.__WB_MANIFEST)
 
-self.addEventListener('install', () => self.skipWaiting())
+// skipWaiting 자동 호출 안 함 — 새 버전이 세션 도중 강제 리로드(=화면이 홈으로 튐)되는 것 방지.
+// 업데이트는 모든 탭을 닫았다 다시 열 때 자연스럽게 적용됨.
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()))
 
 // Web Push 수신 → 시스템 알림 표시 (앱 닫혀 있어도 동작)
