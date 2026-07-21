@@ -27,16 +27,36 @@ const labelStyle: CSSProperties = { display: 'block', fontSize: 12.5, fontWeight
 const inputStyle: CSSProperties = {
   width: '100%', height: 42, padding: '0 13px', border: '1px solid #e0e3e8', borderRadius: 10, fontSize: 14, background: '#fff'
 }
-const checkboxStyle: CSSProperties = { width: 17, height: 17, accentColor: COLOR.primary, cursor: 'pointer' }
-const checkLabelStyle: CSSProperties = { display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, cursor: 'pointer' }
 
-const NOTIFY_OPTIONS: { key: keyof NotifySettings; label: string }[] = [
-  { key: 'deadline', label: '기간 임박 (마감 하루 전·당일)' },
-  { key: 'remind', label: '리마인드 (예정 작업 사전 안내)' },
-  { key: 'update', label: '작업 업데이트 (상태 변경 시)' }
+/** 알림 종류 칩 (다중 선택) */
+type NotifyKey = 'update' | 'deadline' | 'daily'
+const NOTIFY_OPTIONS: { key: NotifyKey; label: string }[] = [
+  { key: 'update', label: '변경 시' },
+  { key: 'deadline', label: '마감일 도래 시' },
+  { key: 'daily', label: '매일' }
 ]
 
-const roLabel: CSSProperties = { fontSize: 12.5, fontWeight: 600, color: '#8a94a6', width: 72, flex: 'none' }
+/** 발송 시각 고정 슬롯 (cron 부하 관리 — worker NOTIFY_SLOTS와 일치) */
+const NOTIFY_SLOTS: { value: string; label: string }[] = [
+  { value: '10:00', label: '오전 10시' },
+  { value: '16:00', label: '오후 4시' }
+]
+
+/** 알림 칩 — segStyle과 달리 내용 너비(flex 없음) */
+function chipStyle(active: boolean): CSSProperties {
+  return {
+    padding: '8px 14px', fontSize: 12.5, fontWeight: 600, borderRadius: 9, cursor: 'pointer',
+    transition: 'all .12s', border: `1px solid ${active ? 'transparent' : '#e0e3e8'}`,
+    background: active ? COLOR.primary : '#fff', color: active ? '#fff' : '#5b6472'
+  }
+}
+
+const accordionHeaderStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 0',
+  border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left', fontSize: 13, fontWeight: 700, color: '#4b5563'
+}
+
+const roLabel: CSSProperties = { fontSize: 12.5, fontWeight: 600, color: '#8a94a6', width: 88, flex: 'none' }
 const roRow: CSSProperties = { display: 'flex', alignItems: 'center', gap: 12, minHeight: 30 }
 
 /** 읽기전용: 편집 컨트롤 대신 요약 정보만 표시 */
@@ -83,13 +103,10 @@ function ReadOnlyDetail({ form }: { form: TaskForm }) {
           <span style={{ fontSize: 12.5, color: '#8a94a6' }}>{fmtDate(form.due)}</span>
         </div>
         <div style={roRow}>
-          <span style={roLabel}>우선순위</span>
+          <span style={roLabel}>우선순위 · 상태</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: pri.dot }} />{form.priority}
           </span>
-        </div>
-        <div style={roRow}>
-          <span style={roLabel}>상태</span>
           <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 8px', borderRadius: 7, background: st.bg, color: st.color }}>{form.status}</span>
         </div>
         {tags.length > 0 && (
@@ -126,6 +143,18 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
   const [busy, setBusy] = useState(false)
   const inflight = useRef(false) // 동기 가드 — 같은 tick 이중 클릭도 차단
 
+  const setNotify = (patch: Partial<NotifySettings>) => set('notify', { ...form.notify, ...patch })
+  const notifOn = form.notify.update || form.notify.deadline || form.notify.daily
+  const needTime = form.notify.deadline || form.notify.daily
+  // 알림 마스터 토글: 끄면 전부 off, 켜면 '마감일 도래'만 기본 on
+  const toggleNotif = () =>
+    set('notify', notifOn ? { ...form.notify, update: false, deadline: false, daily: false } : { ...form.notify, deadline: true })
+
+  // 고급 설정: 기본값과 다른 항목 있으면 펼친 채로 시작
+  const [advOpen, setAdvOpen] = useState(
+    () => form.tags.trim() !== '' || form.isPublic || !form.allowEdit || !form.notify.update || !form.notify.deadline || form.notify.daily
+  )
+
   const modalTitle = readOnly ? '업무 상세' : isEdit ? '업무 편집' : '새 업무 등록'
   const editHint = form.allowEdit
     ? '팀원 누구나 이 업무를 편집하고 완료 처리할 수 있어요.'
@@ -158,7 +187,7 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
           {readOnly ? (
             <ReadOnlyDetail form={form} />
           ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <label style={labelStyle}>제목</label>
             <input value={form.title} onChange={setText('title')} placeholder="업무 제목을 입력하세요" style={inputStyle} />
@@ -208,42 +237,98 @@ export default function TaskModal({ form: initial, isEdit, readOnly, memberNames
               </div>
             </div>
           </div>
-          <div>
-            <label style={labelStyle}>
-              태그 <span style={{ color: '#9aa0aa', fontWeight: 400 }}>(쉼표로 구분)</span>
-            </label>
-            <input value={form.tags} onChange={setText('tags')} placeholder="예: 마케팅, 3분기" style={inputStyle} />
-          </div>
-          <div>
-            <label style={labelStyle}>공개 범위</label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => set('isPublic', false)} style={segStyle(!form.isPublic, '#5b6472')}>비공개 (나만)</button>
-              <button onClick={() => set('isPublic', true)} style={segStyle(form.isPublic)}>공개 (팀 공유)</button>
-            </div>
-          </div>
-          <div>
-            <label style={labelStyle}>편집 권한</label>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => set('allowEdit', true)} style={segStyle(form.allowEdit, 'oklch(0.58 0.13 150)')}>팀원 편집 허용</button>
-              <button onClick={() => set('allowEdit', false)} style={segStyle(!form.allowEdit, '#5b6472')}>나만 편집</button>
-            </div>
-            <div style={{ fontSize: 11.5, color: '#9aa0aa', marginTop: 6 }}>{editHint}</div>
-          </div>
-          <div style={{ borderTop: '1px solid #eef0f3', paddingTop: 14 }}>
-            <label style={{ ...labelStyle, marginBottom: 9 }}>알림 받기</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              {NOTIFY_OPTIONS.map((opt) => (
-                <label key={opt.key} style={checkLabelStyle}>
-                  <input
-                    type="checkbox"
-                    checked={form.notify[opt.key]}
-                    onChange={(e) => set('notify', { ...form.notify, [opt.key]: e.target.checked })}
-                    style={checkboxStyle}
-                  />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
+
+          {/* 고급 설정 — 접기 (태그·공개 범위·편집 권한·알림) */}
+          <div style={{ borderTop: '1px solid #eef0f3' }}>
+            <button type="button" onClick={() => setAdvOpen((v) => !v)} style={accordionHeaderStyle}>
+              고급 설정
+              <span style={{ fontWeight: 400, fontSize: 11.5, color: '#9aa0aa' }}>태그 · 공개 범위 · 편집 권한 · 알림</span>
+              <span style={{ marginLeft: 'auto', color: '#c2c8d2', fontSize: 12, transition: 'transform .15s', transform: advOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
+            </button>
+            {advOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 2, paddingBottom: 4 }}>
+                <div>
+                  <label style={labelStyle}>
+                    태그 <span style={{ color: '#9aa0aa', fontWeight: 400 }}>(쉼표로 구분)</span>
+                  </label>
+                  <input value={form.tags} onChange={setText('tags')} placeholder="예: 마케팅, 3분기" style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <label style={labelStyle}>공개 범위</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => set('isPublic', false)} style={segStyle(!form.isPublic, '#5b6472')}>비공개</button>
+                      <button onClick={() => set('isPublic', true)} style={segStyle(form.isPublic)}>공개</button>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <label style={labelStyle}>편집 권한</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => set('allowEdit', true)} style={segStyle(form.allowEdit, 'oklch(0.58 0.13 150)')}>팀원 허용</button>
+                      <button onClick={() => set('allowEdit', false)} style={segStyle(!form.allowEdit, '#5b6472')}>나만</button>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11.5, color: '#9aa0aa', marginTop: -6 }}>{editHint}</div>
+
+                {/* 알림 — 마스터 토글 + 종류 칩(다중) + 발송 시각 */}
+                <div style={{ borderTop: '1px solid #f2f3f5', paddingTop: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>알림 받기</label>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={notifOn}
+                      onClick={toggleNotif}
+                      style={{
+                        position: 'relative', width: 42, height: 24, borderRadius: 999, border: 'none', padding: 0, cursor: 'pointer',
+                        background: notifOn ? COLOR.primary : '#d5d9e0', transition: 'background .15s'
+                      }}
+                    >
+                      <span style={{
+                        position: 'absolute', top: 3, left: notifOn ? 21 : 3, width: 18, height: 18, borderRadius: '50%',
+                        background: '#fff', boxShadow: '0 1px 3px rgba(16,24,40,.3)', transition: 'left .15s'
+                      }} />
+                    </button>
+                  </div>
+                  {notifOn && (
+                    <>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                        {NOTIFY_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setNotify({ [opt.key]: !form.notify[opt.key] })}
+                            style={chipStyle(form.notify[opt.key])}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                      {needTime && (
+                        <div style={{ marginTop: 12 }}>
+                          <label style={{ ...labelStyle, marginBottom: 7 }}>
+                            발송 시각 <span style={{ color: '#9aa0aa', fontWeight: 400 }}>(마감일 도래·매일 알림)</span>
+                          </label>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            {NOTIFY_SLOTS.map((slot) => (
+                              <button
+                                key={slot.value}
+                                type="button"
+                                onClick={() => setNotify({ time: slot.value })}
+                                style={segStyle(form.notify.time === slot.value)}
+                              >
+                                {slot.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           </div>
           )}

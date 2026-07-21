@@ -9,6 +9,8 @@
     "binding": "ASSETS"
   },
   "rules": [{ "type": "Text", "globs": ["**/*.sql"] }],
+  // 예약 알림: 01:00 UTC = 오전 10시 KST, 07:00 UTC = 오후 4시 KST
+  "triggers": { "crons": ["0 1 * * *", "0 7 * * *"] },
   "d1_databases": [
     {
       "binding": "DB",

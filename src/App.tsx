@@ -45,7 +45,7 @@ function blankForm(assignee: string): TaskForm {
   return {
     id: null, title: '', content: '', assignee, due: toDateStr(today()),
     priority: '보통', status: '예정', tags: '', isPublic: false, allowEdit: true,
-    notify: { update: true, remind: true, deadline: true }
+    notify: { update: true, deadline: true, daily: false, time: '10:00' }
   }
 }
 
@@ -271,8 +271,9 @@ export default function App() {
 
       {profileOpen && me && (
         <ProfileMenu
-          nickname={me.nickname} avatar={me.avatar} teamLabel={teamLabel}
+          nickname={me.nickname} avatar={me.avatar} teamName={me.teamName ?? null}
           onSettings={() => { setProfileOpen(false); setSettingsOpen(true) }}
+          onJoinTeam={() => { setProfileOpen(false); navigate('team') }}
           onLogout={() => { setProfileOpen(false); store.logout() }}
           onClose={() => setProfileOpen(false)}
         />
