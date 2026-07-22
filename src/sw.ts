@@ -20,7 +20,7 @@ self.addEventListener('push', (event: PushEvent) => {
   } catch {
     data = { body: event.data?.text() }
   }
-  const title = data.title || '팀 작업 관리'
+  const title = data.title || '업무 관리'
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',

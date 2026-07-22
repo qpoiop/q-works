@@ -12,15 +12,19 @@
     "screenshots": "node scripts/screenshots.mjs"
   },
   "dependencies": {
+    "dompurify": "^3.4.12",
+    "marked": "^18.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260714.1",
+    "@types/dompurify": "^3.0.5",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "puppeteer-core": "^25.3.0",
+    "sharp": "^0.35.3",
     "typescript": "~5.6.2",
     "vite": "^6.0.0",
     "vite-plugin-pwa": "^0.21.1",

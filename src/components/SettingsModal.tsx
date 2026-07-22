@@ -188,7 +188,7 @@ export default function SettingsModal({ me, onClose, onLeaveTeam }: Props) {
           </div>
         </div>
 
-        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '16px 22px calc(16px + env(safe-area-inset-bottom))', borderTop: '1px solid #eef0f3', background: '#fafbfc' }}>
           <button className="btn-ghost" onClick={onClose} style={{
             marginLeft: 'auto', height: 40, padding: '0 16px', borderRadius: 10, border: '1px solid #e0e3e8',
             background: '#fff', color: '#4b5563', fontSize: 13, fontWeight: 600, cursor: 'pointer'

@@ -3,6 +3,7 @@ import type { CSSProperties, MouseEvent } from 'react'
 import type { Task } from '../types'
 import { PRIORITY_META, STATUS_META, memberMeta } from '../config/meta'
 import { dueMeta } from '../lib/date'
+import { mdToPlain } from '../lib/markdown'
 
 interface Props {
   task: Task
@@ -100,7 +101,7 @@ function TaskCard({ task, editable, onOpen, onToggle }: Props) {
         </div>
         {task.content && (
           <div style={{ marginTop: 4, fontSize: 13, color: '#6b7280', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {task.content}
+            {task.contentFormat === 'markdown' ? mdToPlain(task.content) : task.content}
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 11, flexWrap: 'wrap' }}>

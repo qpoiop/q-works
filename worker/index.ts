@@ -4,6 +4,7 @@ import schema2 from '../migrations/0002_auth_teams.sql'
 import schema3 from '../migrations/0003_push_subscriptions.sql'
 import schema4 from '../migrations/0004_notify_daily_time.sql'
 import schema5 from '../migrations/0005_notify_time_normalize.sql'
+import schema6 from '../migrations/0006_content_format.sql'
 import {
   FIELD_LIMITS, MAX_NOTIFICATIONS, MAX_TASKS, MAX_USERS,
   bodyTooLarge, checkAuthRateLimit, checkRateLimit, isCrossSiteMutation, withSecurityHeaders
@@ -43,7 +44,8 @@ const MIGRATIONS: { name: string; sql: string }[] = [
   { name: '0002_auth_teams', sql: schema2 },
   { name: '0003_push_subscriptions', sql: schema3 },
   { name: '0004_notify_daily_time', sql: schema4 },
-  { name: '0005_notify_time_normalize', sql: schema5 }
+  { name: '0005_notify_time_normalize', sql: schema5 },
+  { name: '0006_content_format', sql: schema6 }
 ]
 
 /** 시안 시드 멤버 + 체험 계정 — users 시드용 (비밀번호 '1234') */
@@ -96,7 +98,7 @@ function ensureMigrated(db: D1Database): Promise<void> {
 
 /* ---------- row <-> model ---------- */
 interface TaskRow {
-  id: string; title: string; content: string; assignee: string; due: string
+  id: string; title: string; content: string; content_format: string; assignee: string; due: string
   priority: Task['priority']; status: Task['status']; tags: string
   is_public: number; locked: number; team_code: string | null; allow_edit: number; prev_status: Task['status'] | null
   notify_update: number; notify_remind: number; notify_deadline: number
@@ -111,7 +113,8 @@ function sanitizeTime(t: unknown): string {
 
 function rowToTask(r: TaskRow): Task {
   return {
-    id: r.id, title: r.title, content: r.content, assignee: r.assignee, due: r.due,
+    id: r.id, title: r.title, content: r.content, contentFormat: r.content_format === 'markdown' ? 'markdown' : 'plain',
+    assignee: r.assignee, due: r.due,
     priority: r.priority, status: r.status,
     tags: JSON.parse(r.tags || '[]') as string[],
     isPublic: !!r.is_public,
@@ -373,11 +376,12 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
       const id = crypto.randomUUID()
       await db
         .prepare(
-          `INSERT INTO tasks (id, title, content, assignee, due, priority, status, tags, is_public, locked, team_code, allow_edit, prev_status, notify_update, notify_remind, notify_deadline, notify_daily, notify_time)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, ?, 0, ?, ?, ?)`
+          `INSERT INTO tasks (id, title, content, content_format, assignee, due, priority, status, tags, is_public, locked, team_code, allow_edit, prev_status, notify_update, notify_remind, notify_deadline, notify_daily, notify_time)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, ?, 0, ?, ?, ?)`
         )
         .bind(
-          id, body.title.trim(), body.content ?? '', body.assignee || me.nickname, body.due, body.priority, body.status,
+          id, body.title.trim(), body.content ?? '', body.contentFormat === 'markdown' ? 'markdown' : 'plain',
+          body.assignee || me.nickname, body.due, body.priority, body.status,
           JSON.stringify(body.tags ?? []), body.isPublic ? 1 : 0, me.teamCode, body.allowEdit === false ? 0 : 1,
           body.notify?.update ? 1 : 0, body.notify?.deadline ? 1 : 0, body.notify?.daily ? 1 : 0, sanitizeTime(body.notify?.time)
         )
@@ -402,11 +406,12 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext): Pro
         const next: Task = { ...cur, ...body, id, notify: { ...cur.notify, ...(body.notify ?? {}) } }
         await db
           .prepare(
-            `UPDATE tasks SET title=?, content=?, assignee=?, due=?, priority=?, status=?, tags=?, is_public=?, allow_edit=?, prev_status=?,
+            `UPDATE tasks SET title=?, content=?, content_format=?, assignee=?, due=?, priority=?, status=?, tags=?, is_public=?, allow_edit=?, prev_status=?,
              notify_update=?, notify_deadline=?, notify_daily=?, notify_time=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?`
           )
           .bind(
-            next.title, next.content, next.assignee, next.due, next.priority, next.status,
+            next.title, next.content, next.contentFormat === 'markdown' ? 'markdown' : 'plain',
+            next.assignee, next.due, next.priority, next.status,
             JSON.stringify(next.tags), next.isPublic ? 1 : 0, next.allowEdit === false ? 0 : 1, next.prevStatus ?? null,
             next.notify.update ? 1 : 0, next.notify.deadline ? 1 : 0, next.notify.daily ? 1 : 0, sanitizeTime(next.notify.time), id
           )

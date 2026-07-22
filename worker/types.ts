@@ -2,6 +2,7 @@
 export type Priority = '높음' | '보통' | '낮음'
 export type Status = '예정' | '진행중' | '완료'
 export type NotifType = '임박' | '업데이트' | '리마인드'
+export type ContentFormat = 'plain' | 'markdown'
 
 export interface NotifySettings {
   update: boolean // 변경 시
@@ -14,6 +15,7 @@ export interface Task {
   id: string
   title: string
   content: string
+  contentFormat: ContentFormat
   assignee: string
   due: string
   priority: Priority

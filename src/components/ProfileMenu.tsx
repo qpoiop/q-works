@@ -47,7 +47,7 @@ export default function ProfileMenu({ nickname, avatar, teamName, onSettings, on
               background: 'transparent', borderRadius: 9, fontSize: 13.5, fontWeight: 500, color: '#3a3f47', cursor: 'pointer', textAlign: 'left'
             }}
           >
-            <span style={{ width: 18, textAlign: 'center', fontSize: 16 }}>⚙</span>설정
+            <span style={{ width: 18, textAlign: 'center', fontSize: 16 }}>{'⚙︎'}</span>설정
           </button>
           <button
             className="menu-item-danger"
@@ -57,7 +57,7 @@ export default function ProfileMenu({ nickname, avatar, teamName, onSettings, on
               background: 'transparent', borderRadius: 9, fontSize: 13.5, fontWeight: 500, color: 'oklch(0.55 0.19 25)', cursor: 'pointer', textAlign: 'left'
             }}
           >
-            <span style={{ width: 18, textAlign: 'center', fontSize: 16 }}>⎋</span>로그아웃
+            <span style={{ width: 18, textAlign: 'center', fontSize: 16 }}>{'⎋︎'}</span>로그아웃
           </button>
         </div>
       </div>

@@ -65,7 +65,7 @@ export default function AuthPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 22 }}>
           <Logo size={42} />
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.4px' }}>팀 작업 관리</div>
+            <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.4px' }}>업무 관리</div>
             <div style={{ fontSize: 12, color: '#8a94a6' }}>할 일 · 마일스톤 · 팀 타임라인</div>
           </div>
         </div>
@@ -78,7 +78,12 @@ export default function AuthPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
           <div>
             <label style={labelStyle}>닉네임</label>
-            <input value={nickname} onChange={(e) => { setNickname(e.target.value); setErr('') }} placeholder="닉네임" style={inputStyle} />
+            {/* iOS 자동 대문자·자동수정 방지 — signup/login 입력 불일치로 인한 로그인 실패 예방 */}
+            <input
+              value={nickname} onChange={(e) => { setNickname(e.target.value); setErr('') }}
+              placeholder="닉네임" style={inputStyle}
+              autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username"
+            />
           </div>
           <div>
             <label style={labelStyle}>비밀번호</label>
@@ -87,6 +92,7 @@ export default function AuthPage() {
               onChange={(e) => { setPassword(e.target.value); setErr('') }}
               onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
               placeholder="비밀번호" style={inputStyle}
+              autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
             />
           </div>
           {tab === 'signup' && (
